@@ -1,0 +1,200 @@
+--------------------------------------------------------------------------
+                           1. Communications
+-------------------------------------------------------------------------
+   
+   --------------------------------------------------------------------
+      1.1 COMMAND TYPES
+   --------------------------------------------------------------------
+   
+      Movement
+      ----------
+         - Pose
+            specify a position in both con/table frames to move to
+            specify a post of joint angles
+            specify a end effector orientation
+            click on a position in both feeds to move the end effector there
+            speed set
+            
+         - Motion
+            specify a position in both con/table frames to move to
+            specify a post of joint angles
+            specify a end effector orientation
+            reorient
+            
+         - Jogging
+            manually move the robot in linear mode respect to base fram
+            manually move the robot in linear mode respect to end effect
+            reorient the end effector
+            jog the joints
+         
+      Change status
+      --------------
+         - startup 
+                        
+         - shutdown
+            move robot to home position
+            avoid collision
+            set all DOs to 0
+            
+         - pause
+            stop current command but remember what its doing
+            
+         - resume
+            resume command
+            
+         - cancel
+            stop current command 
+            remove commands from the queue
+            set movement queue status 
+         
+      poll for status
+      ----------------
+         - safety systems
+         - positions
+         - DIO
+         - movement queue status
+         
+         
+         
+         
+   ---------------------------------------------------------------      
+      1.2 PACKET PROTOCOL
+   ---------------------------------------------------------------
+      
+      MATLAB -> Robot
+      ---------------
+                                 BYTESUM      BIT   BITSUM
+      byte 1: HEADER                1         1-4      4
+      
+      byte 2: COMMAND TYPE
+         
+      
+      Robot -> MATLAB
+      ----------------
+                                 BYTESUM      BIT   BITSUM
+      byte 1: HEADER                1         1-4      4
+      
+      byte 2: STATUS BYTE        
+         - direction                2          1       5
+         - connected                           2       6
+         - paused                              3       7
+         - awaiting command                    4       8
+         e.g. 0100
+         
+      byte 3-4: SAFETY          
+         - emergency stop           3          1       9
+         - light curtain                       2       10
+         - motors                              3       11
+         - hold to enable                      4       12
+         
+         - motion task error        4          5       13
+         - EMPTY                               6       14
+         - EMPTY                               7       15
+         - EMPTY                               8       16
+         e.g. 1111 1xxx
+         
+      byte 5: DI                                       
+         ? how many of theses are there and what are they
+      
+      byte 6: DO                  
+         ? how many of theses are there and what are they
+
+      byte 7 - 9: POSE (Floats)
+         - X                        7                 
+         - Y                        8
+         - Z                        9
+      
+      byte 10 - 12: JOINTS
+         - X                        10
+         - Y                        11
+         - Z                        12
+         
+      byte 13 - 15: END EFFECTOR
+         - X                        13
+         - Y                        14
+         - Z                        15
+         
+--------------------------------------------------------------------------
+                              2. Robot
+---------------------------------------------------------------------------
+
+   process info communications
+   ---------------------------
+     - incoming/outgoing byte
+     - command type
+     - subcommand type
+     - queue number
+      
+   return info packets
+   ---------------------
+      - waiting for command
+      - status
+         - pose
+         - joints
+         - end effector
+         - awaiting command
+         
+   safety systems
+   ---------------------
+      - emergency stop
+      - light curtain
+      - motors
+      - hold to enable
+      - motion task error
+         
+   update status
+   ---------------------
+      - robot studio
+      
+   update CAD
+   ---------------------
+      - robot studio
+   
+--------------------------------------------------------------------------
+                                3.GUI
+--------------------------------------------------------------------------
+   
+   Startup and shutdown
+   ---------------------
+   - startup (on command)
+      [SWPWindow | text] SWP  
+      [SWPWindow | button] ask for SWP confirmation 
+      [guideWindow | text] guide how to operate robot 
+   
+   - shutdown button (on command)
+      [main window | button] Shutdown
+         
+   Robot Status
+   ---------------------
+   - live update (live)
+      [mainWindow | label 1] DIO Status
+      [mainWindow | label 2] Joint angles
+      [mainWindow | label 3] End effector Pos/Orient           
+      [mainWindow | label 4] awiting command            
+      [mainWindow | text box 1] Sent Message Packet List
+         - don't print idle
+      [mainWindow | text box 2] Recv Message Packet List
+         - don't print idle
+         
+   Diagnostics (on error)
+   ---------------------
+   - Stops           
+      [diagWindow | label 1] Emergency Stop 
+      [diagWindow | label 2] Light Curtain
+      [diagWindow | label 3] Motor
+      [diagWindow | label 4] Flex Pendant Enable
+      [diagWindow | label 5] Execution Error/Motion task
+      
+-------------------------------------------------------------------------  
+                              4.NOTES
+-------------------------------------------------------------------------
+
+Things to take into consideration
+--------------------------------------
+   How any times will jogging add to a queue
+   Queue 
+   only on matlab and will get HUGEEE
+
+simulation -
+--------------------------------------
+   localhos instead of the IP address
