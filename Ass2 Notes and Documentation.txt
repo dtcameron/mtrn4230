@@ -2,33 +2,49 @@
                            1. Communications
 -------------------------------------------------------------------------
    
+   Notes:
+   Make sure theres a flag to make sure none of the stops are active
+   
+   
    --------------------------------------------------------------------
       1.1 COMMAND TYPES
    --------------------------------------------------------------------
    
-      Movement
-      ----------
+      Status Check  (C)
+      Status Change (H)
+      Set DIO       (D)
+      
+      Set Pose      (P)
+      Jog Joint     (J)
+      Jog Linear    (L)
+      Jog Stop      (S)
+           
+      ------------------
+       1.1 a) Movement (input Movement Data detailed in 1.2)
+      ------------------
          - Pose
-            specify a position in both con/table frames to move to
-            specify a post of joint angles
-            specify a end effector orientation
-            click on a position in both feeds to move the end effector there
-            speed set
+           specify a position in both con/table frames to move to (P)
+           specify a position of joint angles (P)
+           specify a end effector orientation (P)
+           click on a position in both feeds to move the end effector there (P)
+           speed set
             
          - Motion
-            specify a position in both con/table frames to move to
-            specify a post of joint angles
-            specify a end effector orientation
-            reorient
+           specify a position in both con/table frames to move to (P)
+           specify a pose of joint angles (P)
+           specify a end effector orientation (P)
+           reorient
             
          - Jogging
-            manually move the robot in linear mode respect to base fram
-            manually move the robot in linear mode respect to end effect
-            reorient the end effector
-            jog the joints
+           manually move the robot in linear mode respect to base fram (L)
+           manually move the robot in linear mode respect to end effect (L)
+           reorient the end effector (L)
+           jog the joints (J)
+       
          
-      Change status
-      --------------
+      ------------------------
+       1.1 b) Change status (input Status Data detailed in 1.2
+      ------------------------
          - startup 
                         
          - shutdown
@@ -42,78 +58,192 @@
          - resume
             resume command
             
-         - cancel
+         - cancel (ASK SOMEONE)
             stop current command 
             remove commands from the queue
-            set movement queue status 
+      
+
+      ------------------------
+       1.1 c) DIO change (input DIO Data detailed in 1.2)
+      ------------------------
+         - VacSol 
+         - VacPump                  
+         - ConRun
+         - ConDir 
+               
          
-      poll for status
-      ----------------
+      -----------------------
+       1.1 d) Poll for status (No extra input)
+      -----------------------
          - safety systems
-         - positions
-         - DIO
-         - movement queue status
+         - joint positions
+         - DIO       
          
          
+   --------------------------------------------------------------------
+      1.2 COMMAND INPUTS
+   --------------------------------------------------------------------
          
+      Status Check  (C)
+      Status Change (H)
+      Set DIO       (D)
+      
+      Set Pose      (P)
+      Jog Joint     (J)
+      Jog Linear    (L)
+      Jog Stop      (S)
+      
+      When inputting, please put in the order specified. Example string to send would look like:
+      
+      Sending pose changing from MATLAB -> Robot:
+    HEADER    CMD TYPE      J1    J2    J3    J4    J5    J6    Velocity
+      F0         50 (P)     pi/4  pi/4  ..    ..    ..    ..       100
+      
+      ----------------------------------------
+       1.2 a) Movement Inputs and Formats/Units
+      --------------------------------------
+           
+         POSE (P)
+         -------------
+         Joint Angles (radians * 1000 just so                   6 floats converted to 6 ints
+                       we dont have to deal with decimals, 
+                       will have to reconvert on RB side) 
+                       
+         Velocity (v100 in RS)                                  int
          
+         JOINT JOGGING (J)
+         ---------------------
+         Joint Number                                           int
+         Velocity                                               int
+         
+         LINEAR JOGGING (L)
+         ----------------
+         
+         JOG STOP (S)
+         ----------
+                
+         CONSTANT (RobotStudio Side)
+         ----------------
+         ZoneData (no need to send)
+         tSCup 
+         
+      ------------------------
+       1.2 b) Change Status Inputs
+      ------------------------
+         
+         CHANGE STATUS (H)
+         --------------
+         StatusType (i.e. paused)                               
+         On/Off
+              
+      
+      ------------------------
+       1.2 c) Change DIO inputs
+      ------------------------
+         
+         CHANGE DIO (D)
+         -----------
+         DIOType (i.e. ConRun)
+         On/Off
+      
+      
+
    ---------------------------------------------------------------      
-      1.2 PACKET PROTOCOL
+      1.3 PACKET PROTOCOL
    ---------------------------------------------------------------
+   
+      -------------------
+        MATLAB -> Robot 
+      -------------------
+      For more information on the various types of inputs and 
+      how to structure this, refer to section 1.2
       
-      MATLAB -> Robot
-      ---------------
                                  BYTESUM      BIT   BITSUM
       byte 1: HEADER                1         1-4      4
+         'F0'
       
-      byte 2: COMMAND TYPE
+      byte 2: COMMAND TYPE          2               
+         Status Check  (C)
+         Status Change (H)
          
-      
-      Robot -> MATLAB
-      ----------------
+         Set Pose      (P)
+         Jog Joint     (J)
+         Jog Linear    (L)
+         Jog Stop      (S)
+              
+         Set DIO       (D)
+       
+      byte 3 - x: DATA
+       
+       
+
+       
+      --------------------
+        Robot -> MATLAB
+      --------------------
                                  BYTESUM      BIT   BITSUM
       byte 1: HEADER                1         1-4      4
-      
+         'F1'
+         
       byte 2: STATUS BYTE        
-         - direction                2          1       5
+         - confirmation             2          1       5        check this bit
          - connected                           2       6
          - paused                              3       7
-         - awaiting command                    4       8
+         - awaiting command                    4       8        0 = false (busy)
          e.g. 0100
-         
-      byte 3-4: SAFETY          
-         - emergency stop           3          1       9
+      
+      byte 3: PREV COMMAND          3                           i.e. last recieved Pose change (P)
+      
+      byte 4-5: SAFETY          
+         - emergency stop           4          1       9
          - light curtain                       2       10
          - motors                              3       11
          - hold to enable                      4       12
          
-         - motion task error        4          5       13
+         - motion task error        5          5       13
          - EMPTY                               6       14
          - EMPTY                               7       15
          - EMPTY                               8       16
-         e.g. 1111 1xxx
+         e.g. 1111 1xxx                                         1 = on (activated)
          
-      byte 5: DI                                       
-         ? how many of theses are there and what are they
+      byte 6 - 7: DIO                                       
+         - VacSol                   6
+         - VacPump                  
+         - ConRun
+         - ConDir
+         
+         - ConEnabled               7
+         - EMPTY
+         - EMPTY
+         - EMPTY        
       
-      byte 6: DO                  
-         ? how many of theses are there and what are they
-
-      byte 7 - 9: POSE (Floats)
-         - X                        7                 
-         - Y                        8
-         - Z                        9
+      byte 8 - 32: JOINTS
+         - J1                       11 - 14
+         - J2                       15 - 18
+         - J3                       19 - 22
+         - J4                       23 - 26
+         - J5                       27 - 30
+         - J6                       31 - 34
+         
+         
+   ---------------------------------------------------------------      
+      1.4 COMMUNICATIONS METHOD PROTOCOL 
+   ---------------------------------------------------------------
       
-      byte 10 - 12: JOINTS
-         - X                        10
-         - Y                        11
-         - Z                        12
+      1. MATLAB -> Send Command
+          - If theres a problem, run internal timer to time out
+          
+      2. RobotStudio -> Reply
+          - Send confirmation bit checked
+          - Execute
+                  
+      3. MATLAB
+         - Wait for command finish
          
-      byte 13 - 15: END EFFECTOR
-         - X                        13
-         - Y                        14
-         - Z                        15
-         
+      4. RobotStudio
+         - Movement confirmation when done (awaiting command = true)
+          
+      
 --------------------------------------------------------------------------
                               2. Robot
 ---------------------------------------------------------------------------
@@ -151,8 +281,12 @@
       - robot studio
    
 --------------------------------------------------------------------------
-                                3.GUI
+                                3.MATLAB
 --------------------------------------------------------------------------
+   
+   --------------------------------------------------------------------
+      3.1 GUI Elements and Stuff
+   --------------------------------------------------------------------
    
    Startup and shutdown
    ---------------------
@@ -184,7 +318,41 @@
       [diagWindow | label 3] Motor
       [diagWindow | label 4] Flex Pendant Enable
       [diagWindow | label 5] Execution Error/Motion task
+   
+   --------------------------------------------------------------------
+      3.2 MATLAB Functions List
+   --------------------------------------------------------------------
+   
+      Callback Functions
+      -------------------
+      sendEEPosCallback(X,Y,Z,Q1,Q2,Q3)
+      joggingCallback()
       
+      Queue Functions
+      -------------------
+      sendToQueue()
+   
+      Communications Functions
+      -----------------------
+      sendToRobot() - status needs to override
+      
+      Status Functions
+      -----------------------
+      statusDecode()
+      
+      Computer Vision
+      -----------------------
+      
+      
+      
+      Misc Helper Functions
+      -----------------------
+      createString() (for creating communications strings)
+      
+      
+      
+      
+   
 -------------------------------------------------------------------------  
                               4.NOTES
 -------------------------------------------------------------------------
