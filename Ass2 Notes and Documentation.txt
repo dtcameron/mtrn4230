@@ -1,10 +1,6 @@
 --------------------------------------------------------------------------
                            1. Communications
--------------------------------------------------------------------------
-   
-   Notes:
-   Make sure theres a flag to make sure none of the stops are active
-   
+-------------------------------------------------------------------------  
    
    --------------------------------------------------------------------
       1.1 COMMAND TYPES
@@ -85,7 +81,7 @@
    --------------------------------------------------------------------
          
       Status Check  (C)
-      Status Change (H)
+      Status Change (G)
       Set DIO       (D)
       
       Set Pose      (P)
@@ -153,7 +149,7 @@
    ---------------------------------------------------------------
    
       -------------------
-        MATLAB -> Robot 
+        1.3 a) MATLAB -> Robot 
       -------------------
       For more information on the various types of inputs and 
       how to structure this, refer to section 1.2
@@ -179,7 +175,7 @@
 
        
       --------------------
-        Robot -> MATLAB
+        1.3 b) Robot -> MATLAB
       --------------------
                                  BYTESUM      BIT   BITSUM
       byte 1: HEADER                1         1-4      4
@@ -189,7 +185,7 @@
          - confirmation             2          1       5        check this bit
          - connected                           2       6
          - paused                              3       7
-         - awaiting command                    4       8        0 = false (busy)
+         - awaiting command                    4       8        0 = false (busy), set to 1 at the very start
          e.g. 0100
       
       byte 3: PREV COMMAND          3                           i.e. last recieved Pose change (P)
@@ -323,31 +319,74 @@
       3.2 MATLAB Functions List
    --------------------------------------------------------------------
    
-      Callback Functions
+      Movement Functions
       -------------------
-      sendEEPosCallback(X,Y,Z,Q1,Q2,Q3)
-      joggingCallback()
+      string cmd = setJointPose(int J1, J2, J3, J4, J5, J6) 
+         (times Joints angles by 1000?)
+         
+      string cmd = startJointJogging(int joint, int vel)
+      
+      string cmd = stopJointJogging()
+      
+      string cmd = startLinJogging()
+      
+      Pose Functions
+      -------------------
+      [x ,y ,z] = findJAnglesToPos()
+
+      
+      
+      DIO Functions
+      ------------------
+      string cmd = changeDIO(char DIOType, newState)
+         Sends DIO to change and new state of that DIO
+      
+      setConRun()
+      setConDir()
+      setVacSol()
+      setVacPump()
+      
+      Status Functions
+      -------------------
+      string cmd = changeStatus(char statusType, newState)
+         Sends status to change and new state of that status
+      
+      shutdownRobot()
+      startupRobot()
+      pauseRobot()
+      resumeRobot()
       
       Queue Functions
       -------------------
-      sendToQueue()
+      queue = sendToQueue(string[] queue, string cmd)
+      queue = clearQueue(string[] queue)
+      queue = removeFromQueue(string[] queue, int cmdInd)
    
       Communications Functions
       -----------------------
-      sendToRobot() - status needs to override
+      startConnection(IP)
+         opens a TCPIP socket to robot located at IP address 'IP'
+         
+      sendToRobot(string cmd)
+      sendFromQueue(string[] queue)
+      
+      closeConnection(socket)
+         closes TCPIP socket
+         
+      
       
       Status Functions
       -----------------------
-      statusDecode()
+      statusDecode(string reply)
       
       Computer Vision
       -----------------------
-      
+      blocks = detectBlocks(img)
       
       
       Misc Helper Functions
       -----------------------
-      createString() (for creating communications strings)
+      createOutputString() (for creating communications strings)
       
       
       
@@ -357,12 +396,7 @@
                               4.NOTES
 -------------------------------------------------------------------------
 
-Things to take into consideration
---------------------------------------
-   How any times will jogging add to a queue
-   Queue 
-   only on matlab and will get HUGEEE
-
-simulation -
---------------------------------------
-   localhos instead of the IP address
+   
+   Notes:
+   Make sure theres a flag to make sure none of the stops are active
+   
