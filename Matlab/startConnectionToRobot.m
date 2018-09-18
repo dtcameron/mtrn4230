@@ -35,14 +35,12 @@ function startConnectionToRobot(IP)
     %------------------------------------------------------------------
     %Set the status bits for intialization!!!!
     %Set hte confirmation bit and see if it comes back okay
-    initConfMsg = changeStatus('Confirmation');
+    initConfMsg = toggleStatus('Confirmation');
     fwrite(socket, initConfMsg);
-    
-    while ()
-    
-    end
+      
+    initConfMsg = toggleStatus('Connected');
+    fwrite(socket, initConfMsg);
 
-    
     
     
 %     % Close the socket.
