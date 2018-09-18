@@ -1,7 +1,8 @@
-function cmd = changeDIO(DIOType)
+function cmd = changeDIO(DIOBinary)
     % Input a DIO string (detailed below)
-    % will toggle that DIO
-    % i.e. if vacSol = 1 currently, sending '1000' will toggle vacSol to 0.
+    % Will set the bits of the corresponding position DIO accordinly
+    % i.e. sending '1000'
+    % VacSol = 1, VacPump = 0 ... so on
     
     % DIO CHANGE (D), command type (D)
     % List of DIO: (IN THIS ORDER)
@@ -12,18 +13,10 @@ function cmd = changeDIO(DIOType)
 
     invalid = 0;
     
-    switch(DIOType) 
-        case 'VacSol'
-            binary = '1000';
-        case 'VacPump'
-            binary = '0100';
-        case 'ConRun'
-            binary = '0010';
-        case 'ConDir'
-            binary = '0001';
-        otherwise
-            binary = '0000';
-            invalid = 1;
+    if numel(DIOBinary) ~= 4
+        invalid = 1;
+    else
+        binary = DIOBinary;
     end
     
     %check if it's a valid one
