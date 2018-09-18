@@ -1,6 +1,7 @@
 function cmd = changeDIO(DIOType)
     % Input a DIO string (detailed below)
     % will toggle that DIO
+    % i.e. if vacSol = 1 currently, sending '1000' will toggle vacSol to 0.
     
     % DIO CHANGE (D), command type (D)
     % List of DIO: (IN THIS ORDER)
