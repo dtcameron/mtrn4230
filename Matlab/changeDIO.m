@@ -31,7 +31,7 @@ function cmd = changeDIO(DIOType)
         binary = char(binary);
         cmd = createCmdString('D',binary);
     else
-        cmd = createCmdString()
+        cmd = createCmdString('C')
         disp('Invalid cmdString, defaulting to status checking')
     end
     
