@@ -7,8 +7,10 @@
    --------------------------------------------------------------------
    
       Status Check  (C)
-      Status Change (H)
-      Set DIO       (D)
+      Status Toggle (G)
+      
+      Change DIO       (D)
+      Toggle DIO    (T)
       
       Set Pose      (P)
       Jog Joint     (J)
@@ -127,9 +129,13 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
        1.2 c) Change DIO inputs
       ------------------------
          
-         CHANGE DIO (D)
+         Toggle DIO (T)
          -----------
          DIOType (i.e. 'VacSol')                                string
+	 
+	 Change DIO (D)
+	 ---------------
+	 BIOBinary (i.e. '0010')
       
       ------------------------
        1.2 ) Status Check
@@ -325,15 +331,24 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
       
       DIO Functions
       ------------------
-      string cmd = changeDIO(string DIOType)
-         Sends DIO in question to change, creates a toggle command
+      string cmd = changeDIO(binaryStr DIOBinary)
+	Input is a binary string detailing on/off configurations of DOs
+	     % List of DIO:
+    		%    VacSol     (1)
+    		%    VacPump    (2)              
+  		%    ConRun     (3)
+    		%    ConDir     (4)
+	 e.g. usage:  changeDIO('0001')
+	 
+      string cmd = toggleDIO(string DIOType)
+        Sends DIO in question to change, creates a toggle command
       	     % List of DIO:
     		%    VacSol     (1)
     		%    VacPump    (2)              
   		%    ConRun     (3)
     		%    ConDir     (4)
-	      e.g. usage:  changeDIO('VacSol')
-      
+	 e.g. usage:  toggleDIO('VacSol')
+	      
       Status Functions
       -------------------
       string cmd = changeStatus(string statusType)
