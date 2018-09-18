@@ -333,21 +333,11 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
   		%    ConRun     (3)
     		%    ConDir     (4)
 	      e.g. usage:  changeDIO('VacSol')
-
-      setConRun()
-      setConDir()
-      setVacSol()
-      setVacPump()
       
       Status Functions
       -------------------
       string cmd = changeStatus(char statusType, newState)
          Sends status to change and new state of that status
-      
-      shutdownRobot()
-      startupRobot()
-      pauseRobot()
-      resumeRobot()
       
       Queue Functions
       -------------------
