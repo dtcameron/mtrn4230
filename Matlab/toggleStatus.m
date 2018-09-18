@@ -1,4 +1,4 @@
-function cmd = changeStatus(statusType)
+function cmd = toggleStatus(statusType)
     % Sends status to change
     % Will toggle that status
     %
