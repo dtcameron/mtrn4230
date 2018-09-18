@@ -3,7 +3,7 @@ function cmd = toggleDIO(DIOType)
     % will toggle that DIO
     % i.e. if vacSol = 1 currently, sending '1000' will toggle vacSol to 0.
     
-    % DIO CHANGE (D), command type (D)
+    % DIO CHANGE (T), command type (T)
     % List of DIO: (IN THIS ORDER)
     %    'VacSol'     (1)
     %    'VacPump'    (2)              
@@ -29,7 +29,7 @@ function cmd = toggleDIO(DIOType)
     %check if it's a valid one
     if (invalid == 0)
         binary = char(binary);
-        cmd = createCmdString('D',binary);
+        cmd = createCmdString('T',binary);
     else
         cmd = createCmdString('C')
         disp('Invalid cmdString, defaulting to status checking')
