@@ -1,0 +1,116 @@
+MODULE MTRN4230_Server_Sample    
+
+    ! The socket connected to the client.
+    VAR socketdev client_socket;
+    
+    ! The host and port that we will be listening for a connection on.
+    PERS string host := "127.0.0.1";
+    
+    CONST num port := 1025;
+    
+    PROC Mainer ()
+        IF RobOS() THEN
+            host := "192.168.125.1";
+        ELSE
+            host := "127.0.0.1";
+        ENDIF
+        MainServer;
+        
+    ENDPROC
+
+    PROC MainServer()
+        
+        VAR string received_str;
+        
+        ListenForAndAcceptConnection;
+        WHILE TRUE DO
+            AwaitMessage;
+        ENDWHILE
+        ! Receive a string from the client.
+!        SocketReceive client_socket \Str:=received_str;
+        
+        
+            
+        ! Send the string back to the client, adding a line feed character.
+!        SocketSend client_socket \Str:=(StrPart(received_str,1,1) + "\0A");
+
+        CloseConnection;
+		
+    ENDPROC
+    
+    PROC AwaitMessage()
+        VAR string received_str;
+        VAR string str := "FPMAMAMAMAMAMA";
+        !VAR num joints{6} := [0,0,0,0,0,0];
+        VAR jointtarget joints := [[0,0,0,0,0,0],[9e9,9e9,9e9,9e9,9e9,9e9]];
+        
+        
+        SocketReceive client_socket \Str:=received_str;
+        
+        IF StrPart(received_str,1,1) = "F" THEN
+            TEST StrPart(received_str,2,1)
+            CASE "C":
+            CASE "G":
+            CASE "D":
+            CASE "P":
+                joints := [[
+                    Decode2Bytes(StrPart(received_str,3,2)),
+                    Decode2Bytes(StrPart(received_str,5,2)),
+                    Decode2Bytes(StrPart(received_str,7,2)),
+                    Decode2Bytes(StrPart(received_str,9,2)),
+                    Decode2Bytes(StrPart(received_str,11,2)),
+                    Decode2Bytes(StrPart(received_str,13,2))],[9e9,9e9,9e9,9e9,9e9,9e9]];
+                    
+                MoveAbsJ joints, v100, fine, tSCup;
+                    
+            CASE "J":
+            CASE "L":
+            CASE "S":
+            DEFAULT:
+            ENDTEST
+        ENDIF
+        !get action
+        
+        !perform action
+        
+        !reply
+            
+        ! Send the string back to the client, adding a line feed character.
+        SocketSend client_socket \Str:=(StrPart(received_str,1,1) + "\0A");
+    ENDPROC
+    
+    FUNC num Decode2Bytes(string chars)
+        VAR num big := StrToByte(StrPart(chars,1,1)\char)*255;
+        VAR num little := StrToByte(StrPart(chars,2,1)\char);
+        VAR num result := big + little;
+        result := result*180/pi;
+        RETURN result;
+    ENDFUNC
+
+    PROC ListenForAndAcceptConnection()
+        
+        ! Create the socket to listen for a connection on.
+        VAR socketdev welcome_socket;
+        SocketCreate welcome_socket;
+        
+        ! Bind the socket to the host and port.
+        SocketBind welcome_socket, host, port;
+        
+        ! Listen on the welcome socket.
+        SocketListen welcome_socket;
+        
+        ! Accept a connection on the host and port.
+        SocketAccept welcome_socket, client_socket \Time:=WAIT_MAX;
+        
+        ! Close the welcome socket, as it is no longer needed.
+        SocketClose welcome_socket;
+        
+    ENDPROC
+    
+    ! Close the connection to the client.
+    PROC CloseConnection()
+        SocketClose client_socket;
+    ENDPROC
+    
+
+ENDMODULE
