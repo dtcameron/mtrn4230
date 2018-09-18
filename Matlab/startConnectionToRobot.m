@@ -5,12 +5,11 @@ function startConnectionToRobot(IP)
     % Real Robot     '192.168.125.1'
     % Fake Robot     '127.0.0.1'
     % Port           '1025'
-    
     robotIPAddress = IP;
     robotPort = 1025;
     
     % Connection variables 
-       
+    confirmFlag = 0;
 
     % Open a TCP connection to the robot.
     socket = tcpip(robotIPAddress, robotPort);
@@ -32,12 +31,21 @@ function startConnectionToRobot(IP)
     fwrite(socket, [datestr(datetime('now'),'mmm-dd HH:MM:SS') ... 
                    '. Henlo Robot!.\n']);     %send message
     data = fgetl(socket);     %recieve reply
-
     fprintf(char(data));     % Print confirmation
     %------------------------------------------------------------------
-        
+    %Set the status bits for intialization!!!!
+    %Set hte confirmation bit and see if it comes back okay
+    initConfMsg = changeStatus('Confirmation');
+    fwrite(socket, initConfMsg);
     
-    % Close the socket.
-    fclose(socket);
+    while ()
+    
+    end
+
+    
+    
+    
+%     % Close the socket.
+%     fclose(socket);
     
 end
