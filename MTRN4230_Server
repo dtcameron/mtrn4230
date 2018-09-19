@@ -22,7 +22,7 @@ MODULE MTRN4230_Server_Sample
         
         VAR string received_str;
         
-        ListenForAndAcceptConnection;
+       ! ListenForAndAcceptConnection;
         WHILE TRUE DO
             AwaitMessage;
         ENDWHILE
@@ -39,10 +39,13 @@ MODULE MTRN4230_Server_Sample
     ENDPROC
     
     PROC AwaitMessage()
-        VAR string received_str;
-        VAR string str := "FPMAMAMAMAMAMA";
+        !VAR string received_str;
+        VAR string received_str := "FC";
         !VAR num joints{6} := [0,0,0,0,0,0];
         VAR jointtarget joints := [[0,0,0,0,0,0],[9e9,9e9,9e9,9e9,9e9,9e9]];
+        VAR num target := -1;
+        VAR num val := -1;
+        VAR string lastcommand := ""; 
         
         
         SocketReceive client_socket \Str:=received_str;
@@ -50,22 +53,36 @@ MODULE MTRN4230_Server_Sample
         IF StrPart(received_str,1,1) = "F" THEN
             TEST StrPart(received_str,2,1)
             CASE "C":
+                lastcommand := "C";
+                
             CASE "G":
+                lastcommand := "G";
             CASE "D":
+                lastcommand := "D";
+                batchSetDigitalO(StrPart(received_str, 3, 4));                
+            CASE "T":
+                lastcommand := "D";
+                target := StrToByte(StrPart(received_str, 3, 1));
+                val := StrToByte(StrPart(received_str, 4, 1));
+                setDigitalIO target, val;
             CASE "P":
+                lastcommand := "P";
                 joints := [[
                     Decode2Bytes(StrPart(received_str,3,2)),
                     Decode2Bytes(StrPart(received_str,5,2)),
                     Decode2Bytes(StrPart(received_str,7,2)),
                     Decode2Bytes(StrPart(received_str,9,2)),
                     Decode2Bytes(StrPart(received_str,11,2)),
-                    Decode2Bytes(StrPart(received_str,13,2))],[9e9,9e9,9e9,9e9,9e9,9e9]];
+                    Decode2Bytes(StrPart(received_str,13,2))],[0,9e9,9e9,9e9,9e9,9e9]];
                     
                 MoveAbsJ joints, v100, fine, tSCup;
                     
             CASE "J":
+                lastcommand := "J";
             CASE "L":
+                lastcommand := "L";
             CASE "S":
+                lastcommand := "S";
             DEFAULT:
             ENDTEST
         ENDIF
@@ -76,17 +93,111 @@ MODULE MTRN4230_Server_Sample
         !reply
             
         ! Send the string back to the client, adding a line feed character.
-        SocketSend client_socket \Str:=(StrPart(received_str,1,1) + "\0A");
+        SocketSend client_socket \Str:=GetRobStatus(lastcommand);
     ENDPROC
     
+    FUNC string GetRobStatus(string lastcommand)
+        VAR string output := "B";
+        VAR jointtarget joints;
+        VAR num angle1 := 0;
+        VAR string temp := "";
+
+        !Status
+       ! output := output + confirm;
+       ! output := output + connect;
+       ! output := output + paused;
+       ! output := output + awaiting;
+        !Prev command
+        output := output + lastcommand;
+        !Safety
+        output := output + lastcommand;
+        output := output + lastcommand;
+        output := output + lastcommand;
+        output := output + lastcommand;
+        output := output + lastcommand;
+        !DIO
+        output := output + ByteToStr(DO10_2); !vac sol
+        output := output + ByteToStr(DO10_1); !vac pump
+        output := output + ByteToStr(DO10_3); !con run
+        output := output + ByteToStr(DO10_4); !con dir
+        output := output + ByteToStr(DI10_1); !Con stat
+        !Joints
+        joints := CJointT();
+        
+        angle1 := joints.robax.rax_1;
+        
+        output := output + Encode2String(joints.robax.rax_1);
+        output := output + Encode2String(joints.robax.rax_2);
+        output := output + Encode2String(joints.robax.rax_3);
+        output := output + Encode2String(joints.robax.rax_4);
+        output := output + Encode2String(joints.robax.rax_5);
+        output := output + Encode2String(joints.robax.rax_6);
+        
+        
+        
+        
+    ENDFUNC
+    
+    PROC batchSetDigitalO(string target)
+        setDigitalIO 1, StrToByte(Strpart(target,1,1));
+        setDigitalIO 2, StrToByte(Strpart(target,2,1));
+        setDigitalIO 3, StrToByte(Strpart(target,3,1));
+        setDigitalIO 4, StrToByte(Strpart(target,4,1));
+    ENDPROC
+    
+    
+    
+    PROC setDigitalIO(num target, num value)
+        TEST target
+        CASE 1:
+            DO10_1 := value;
+        CASE 2:
+            DO10_2 := value;
+        CASE 3:
+            DO10_3 := value;
+        CASE 4:
+            DO10_4 := value;
+        ENDTEST
+    ENDPROC
+    
+    
     FUNC num Decode2Bytes(string chars)
-        VAR num big := StrToByte(StrPart(chars,1,1)\char)*255;
-        VAR num little := StrToByte(StrPart(chars,2,1)\char);
-        VAR num result := big + little;
+        VAR byte data_buffer{5};
+        VAR string big := "";
+        
+        VAR string little := "";
+        VAR num bigNum := 0;
+        VAR num littleNum := 0;
+        VAR num result := 0;
+        big := StrPart(chars,2,1);
+        little := StrPart(chars,1,1);
+        bigNum := StrToByte(big\Char);
+        littleNum := StrToByte(little\Char);
+        
+        result := bigNum *255 + littleNum;
+        !VAR num big := StrToByte("StrPart(chars,1,1)"\Char);
+        !VAR num little := StrToByte(StrPart(chars,2,1));
+        ! big + little;
+        !data_buffer{5} := StrToByte(con_data_buffer{5}\Char);
         result := result*180/pi;
         RETURN result;
     ENDFUNC
-
+    
+    FUNC string Encode2String(num in)
+        VAR string out;
+        VAR string a;
+        VAR string b;
+        VAR num last;
+        VAR num first;
+        !in := round((in/360)*Pow(2, 16)-1);
+        in := in/360;
+        in := round(in * 65535);
+        last := in MOD 256;
+        first := Round((in-last)/256);
+        out := ByteToStr(first\Hex) +  ByteToStr(last\Hex); 
+        RETURN out;
+    ENDFUNC
+    
     PROC ListenForAndAcceptConnection()
         
         ! Create the socket to listen for a connection on.
