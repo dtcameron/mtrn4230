@@ -3,6 +3,7 @@ function joints = decodeJoints(rawJoints)
     % returns a 1 * 6 (size(Joints)) joint angle array
     % previously, it had been converted from float to int to char
     % going from char to int to float
+    % raw joints should be a 6 * 2 char array
     
     rawJoint = zeros(1, size(rawJoints,1));
     
