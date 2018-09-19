@@ -19,6 +19,6 @@ function [status, safety, DIO, joints] = processMessage(x)
               x(25:26);     ... % J5
               x(27:28);];       % J6
     % WILL NEED PROCESSING VIA decodeJoint
-    joints = decodeJoints(joints)
+    joints = decodeJoints(rawJoints)
 
 end
