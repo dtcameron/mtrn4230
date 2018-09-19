@@ -1,4 +1,6 @@
 function SafetySystem(app, safety)
+% modify error lamp and display error message
+% should be called after every message decoding
 
 if any(safety)
     app.ERRORLamp.Color = 'r';
