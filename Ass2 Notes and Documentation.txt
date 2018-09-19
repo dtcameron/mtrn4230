@@ -10,7 +10,7 @@
       Status Toggle (G)
       
       Change DIO       (D)
-      Toggle DIO    (T)
+      Toggle DIO    (T)   *******
       
       Set Pose      (P)
       Jog Joint     (J)
@@ -69,23 +69,14 @@
    --------------------------------------------------------------------
       1.2 COMMAND INPUTS
    --------------------------------------------------------------------
-         
-      Status Check  (C)
-      Status Change (G)
-      Set DIO       (D)
-      
-      Set Pose      (P)
-      Jog Joint     (J)
-      Jog Linear    (L)
-      Jog Stop      (S)
-      
+              
       When inputting, please put in the order specified below. Example string to send would look like:
       
       EXAMPLE: Sending pose changing from MATLAB -> Robot:
 
 BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  15 |
       HEADER    CMD TYPE  Velocity    J1      J2     J3      J4       J5       J6    
-        'F'       'P'   100 -> ' d' (pi/4   pi/4   ..      ..       ..       ..   * /(2*pi)*(2^16-1))       
+        'F'       'P'   100 -> ' d' (pi/4   pi/4     ..      ..       ..       .. )  * /(2*pi)*(2^16-1)       
       
       ----------------------------------------
        1.2 a) Movement Inputs and Formats/Units
@@ -340,7 +331,7 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
     		%    ConDir     (4)
 	 e.g. usage:  changeDIO('0001')
 	 
-      string cmd = toggleDIO(string DIOType)
+      string cmd = toggleDIO(string DIOType)                       *********
         Sends DIO in question to change, creates a toggle command
       	     % List of DIO:
     		%    VacSol     (1)
@@ -378,9 +369,16 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
          
       sendFromQueue(string[] queue, socket)
       
-      processMessage(string reply)
-      decodeMessage(string reply)
+      [status, safety, DIO, joints] = processMessage(string reply)
+         decodes the message coming back from RS
+         gives a status struct, binary safety and DIO, joints in raw data form
 
+      
+      
+      joints = decodeJoints(char jointData)
+         decodes the joint data from char
+         returns a 1 x 6 array of floats
+         
       
       Computer Vision
       -----------------------
