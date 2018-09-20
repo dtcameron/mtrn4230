@@ -81,8 +81,18 @@ MODULE MTRN4230_Server_Sample
                 lastcommand := "J";
             CASE "L":
                 lastcommand := "L";
-            CASE "S":
-                lastcommand := "S";
+            CASE "A":
+                lastcommand := "A";
+                StorePath;
+                StopMove;
+            CASE "R":
+                lastcommand := "R";
+                RestoPath;
+                StartMove;
+            CASE "H":
+                lastcommand := "H";
+                StopMove;
+                ClearPath;
             DEFAULT:
             ENDTEST
         ENDIF
@@ -101,16 +111,13 @@ MODULE MTRN4230_Server_Sample
         VAR jointtarget joints;
         VAR num angle1 := 0;
         VAR string temp := "";
-
+        !DI
         !Status
-       ! output := output + confirm;
-       ! output := output + connect;
-       ! output := output + paused;
-       ! output := output + awaiting;
+        output := output + "1111";
         !Prev command
         output := output + lastcommand;
         !Safety
-        output := output + lastcommand;
+        output := output + lastcommand; !
         output := output + lastcommand;
         output := output + lastcommand;
         output := output + lastcommand;
