@@ -1,14 +1,19 @@
-MODULE MTRN4230_Server_Sample    
+MODULE server    
 
     ! The socket connected to the client.
     VAR socketdev client_socket;
     
     ! The host and port that we will be listening for a connection on.
     PERS string host := "127.0.0.1";
+    PERS string action := "";
+    PERS robjoint joints := [0,0,0,0,0,0];
+    PERS num joggingjoints{6} := [0,0,0,0,0,0];
+    PERS num jogdir{3} := [0,0,0];
+    PERS speeddata speed := v100;
     
     CONST num port := 1025;
     
-    PROC Mainer ()
+    PROC Main ()
         IF RobOS() THEN
             host := "192.168.125.1";
         ELSE
@@ -21,18 +26,11 @@ MODULE MTRN4230_Server_Sample
     PROC MainServer()
         
         VAR string received_str;
-        
-       ! ListenForAndAcceptConnection;
+        ListenForAndAcceptConnection;
         WHILE TRUE DO
             AwaitMessage;
         ENDWHILE
-        ! Receive a string from the client.
-!        SocketReceive client_socket \Str:=received_str;
-        
-        
-            
-        ! Send the string back to the client, adding a line feed character.
-!        SocketSend client_socket \Str:=(StrPart(received_str,1,1) + "\0A");
+
 
         CloseConnection;
 		
@@ -42,54 +40,64 @@ MODULE MTRN4230_Server_Sample
         !VAR string received_str;
         VAR string received_str := "FC";
         !VAR num joints{6} := [0,0,0,0,0,0];
-        VAR jointtarget joints := [[0,0,0,0,0,0],[9e9,9e9,9e9,9e9,9e9,9e9]];
+        
         VAR num target := -1;
         VAR num val := -1;
         VAR string lastcommand := ""; 
-        
         
         SocketReceive client_socket \Str:=received_str;
         
         IF StrPart(received_str,1,1) = "F" THEN
             TEST StrPart(received_str,2,1)
-            CASE "C":
+            CASE "C": !status check
                 lastcommand := "C";
-                
-            CASE "G":
-                lastcommand := "G";
-            CASE "D":
+            CASE "D": !set all digital outputs to this
                 lastcommand := "D";
                 batchSetDigitalO(StrPart(received_str, 3, 4));                
-            CASE "T":
+            CASE "T": !toggle individual digital output
                 lastcommand := "D";
                 target := StrToByte(StrPart(received_str, 3, 1));
                 val := StrToByte(StrPart(received_str, 4, 1));
                 setDigitalIO target, val;
-            CASE "P":
+            CASE "P": !move to specified pose
                 lastcommand := "P";
-                joints := [[
+                action := "p";
+                joints := [
                     Decode2Bytes(StrPart(received_str,3,2)),
                     Decode2Bytes(StrPart(received_str,5,2)),
                     Decode2Bytes(StrPart(received_str,7,2)),
                     Decode2Bytes(StrPart(received_str,9,2)),
                     Decode2Bytes(StrPart(received_str,11,2)),
-                    Decode2Bytes(StrPart(received_str,13,2))],[0,9e9,9e9,9e9,9e9,9e9]];
+                    Decode2Bytes(StrPart(received_str,13,2))];
                     
-                MoveAbsJ joints, v100, fine, tSCup;
-                    
-            CASE "J":
+            CASE "J": !jog joint
                 lastcommand := "J";
-            CASE "L":
+                joggingjoints := [
+                    Decode2Bytes(StrPart(received_str,3,2)),
+                    Decode2Bytes(StrPart(received_str,5,2)),
+                    Decode2Bytes(StrPart(received_str,7,2)),
+                    Decode2Bytes(StrPart(received_str,9,2)),
+                    Decode2Bytes(StrPart(received_str,11,2)),
+                    Decode2Bytes(StrPart(received_str,13,2))];
+
+                
+            CASE "L": !jog linear 
                 lastcommand := "L";
-            CASE "A":
+                jogdir := [
+                    StrToByte(StrPart(received_str,3,2)),
+                    StrToByte(StrPart(received_str,5,2)),
+                    StrToByte(StrPart(received_str,7,2))
+                
+                ];
+            CASE "A": !pause jogging (arrette)
                 lastcommand := "A";
                 StorePath;
                 StopMove;
-            CASE "R":
+            CASE "R": !resume jogging 
                 lastcommand := "R";
                 RestoPath;
                 StartMove;
-            CASE "H":
+            CASE "H": !
                 lastcommand := "H";
                 StopMove;
                 ClearPath;
@@ -108,8 +116,7 @@ MODULE MTRN4230_Server_Sample
     
     FUNC string GetRobStatus(string lastcommand)
         VAR string output := "B";
-        VAR jointtarget joints;
-        VAR num angle1 := 0;
+        VAR jointtarget jointsout;
         VAR string temp := "";
         !DI
         !Status
@@ -129,16 +136,14 @@ MODULE MTRN4230_Server_Sample
         output := output + ByteToStr(DO10_4); !con dir
         output := output + ByteToStr(DI10_1); !Con stat
         !Joints
-        joints := CJointT();
+        jointsout := CJointT();
         
-        angle1 := joints.robax.rax_1;
-        
-        output := output + Encode2String(joints.robax.rax_1);
-        output := output + Encode2String(joints.robax.rax_2);
-        output := output + Encode2String(joints.robax.rax_3);
-        output := output + Encode2String(joints.robax.rax_4);
-        output := output + Encode2String(joints.robax.rax_5);
-        output := output + Encode2String(joints.robax.rax_6);
+        output := output + Encode2String(jointsout.robax.rax_1);
+        output := output + Encode2String(jointsout.robax.rax_2);
+        output := output + Encode2String(jointsout.robax.rax_3);
+        output := output + Encode2String(jointsout.robax.rax_4);
+        output := output + Encode2String(jointsout.robax.rax_5);
+        output := output + Encode2String(jointsout.robax.rax_6);
         
         
         
@@ -182,10 +187,6 @@ MODULE MTRN4230_Server_Sample
         littleNum := StrToByte(little\Char);
         
         result := bigNum *255 + littleNum;
-        !VAR num big := StrToByte("StrPart(chars,1,1)"\Char);
-        !VAR num little := StrToByte(StrPart(chars,2,1));
-        ! big + little;
-        !data_buffer{5} := StrToByte(con_data_buffer{5}\Char);
         result := result*180/pi;
         RETURN result;
     ENDFUNC
