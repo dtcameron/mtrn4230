@@ -15,7 +15,13 @@
       Set Pose      (P)
       Jog Joint     (J)
       Jog Linear    (L)
-      Jog Stop      (S)
+      
+      Pause Motion (A)
+      Resume (R)
+      Stop (H)
+      
+      stop
+      
            
       ------------------
        1.1 a) Movement (input Movement Data detailed in 1.2)
