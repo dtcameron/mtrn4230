@@ -1,0 +1,1166 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:pPr><w:pStyle w:val="code"/></w:pPr><w:r><w:t><![CDATA[classdef Assignment2GUI_temp < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                      matlab.ui.Figure
+        TabGroup                      matlab.ui.container.TabGroup
+        OverviewTab                   matlab.ui.container.Tab
+        JointAngleTable               matlab.ui.control.Table
+        CurrentJointAnglesLabel       matlab.ui.control.Label
+        EEPositionTable               matlab.ui.control.Table
+        EEPositionLabel               matlab.ui.control.Label
+        EEOrientationTable            matlab.ui.control.Table
+        EEOrientationLabel            matlab.ui.control.Label
+        DIOStatesLabel                matlab.ui.control.Label
+        PumpButton                    matlab.ui.control.StateButton
+        VacuumLabel                   matlab.ui.control.Label
+        SolenoidButton                matlab.ui.control.StateButton
+        ConveyorLabel                 matlab.ui.control.Label
+        ConStatusButton               matlab.ui.control.StateButton
+        ConRunButton                  matlab.ui.control.StateButton
+        DirectionButtonGroup          matlab.ui.container.ButtonGroup
+        IntocellButton                matlab.ui.control.ToggleButton
+        OutofcellButton               matlab.ui.control.ToggleButton
+        TabGroup2                     matlab.ui.container.TabGroup
+        SentTab                       matlab.ui.container.Tab
+        SentLog                       matlab.ui.control.TextArea
+        ReceivedTab                   matlab.ui.container.Tab
+        ReceivedLog                   matlab.ui.control.TextArea
+        QueuedTab                     matlab.ui.container.Tab
+        QueuedLog                     matlab.ui.control.TextArea
+        MessageLogLabel               matlab.ui.control.Label
+        RobotStatusLabel              matlab.ui.control.Label
+        TabVidAxes                    matlab.ui.control.UIAxes
+        ConVidAxes                    matlab.ui.control.UIAxes
+        PoseTab                       matlab.ui.container.Tab
+        MovetoPositionPanel           matlab.ui.container.Panel
+        RelativetoHomeButtonGroup     matlab.ui.container.ButtonGroup
+        TableButton                   matlab.ui.control.ToggleButton
+        ConveyorButton                matlab.ui.control.ToggleButton
+        XEditFieldLabel               matlab.ui.control.Label
+        XEditField                    matlab.ui.control.NumericEditField
+        YEditFieldLabel               matlab.ui.control.Label
+        YEditField                    matlab.ui.control.NumericEditField
+        ZEditFieldLabel               matlab.ui.control.Label
+        ZEditField                    matlab.ui.control.NumericEditField
+        Q1EditFieldLabel              matlab.ui.control.Label
+        Q1EditField                   matlab.ui.control.NumericEditField
+        Q2EditFieldLabel              matlab.ui.control.Label
+        Q2EditField                   matlab.ui.control.NumericEditField
+        Q3EditFieldLabel              matlab.ui.control.Label
+        Q3EditField                   matlab.ui.control.NumericEditField
+        Q4EditFieldLabel              matlab.ui.control.Label
+        Q4EditField                   matlab.ui.control.NumericEditField
+        EndEffectorOrientationOnlySwitchLabel  matlab.ui.control.Label
+        EndEffOriOnlySwitch           matlab.ui.control.Switch
+        SendPositionCommandButton     matlab.ui.control.Button
+        MovetoPosePanel               matlab.ui.container.Panel
+        Joint1EditFieldLabel          matlab.ui.control.Label
+        Joint1EditField               matlab.ui.control.NumericEditField
+        Joint2EditFieldLabel          matlab.ui.control.Label
+        Joint2EditField               matlab.ui.control.NumericEditField
+        Joint3EditFieldLabel          matlab.ui.control.Label
+        Joint3EditField               matlab.ui.control.NumericEditField
+        Joint4EditFieldLabel          matlab.ui.control.Label
+        Joint4EditField               matlab.ui.control.NumericEditField
+        Joint5EditFieldLabel          matlab.ui.control.Label
+        Joint5EditField               matlab.ui.control.NumericEditField
+        Joint6EditFieldLabel          matlab.ui.control.Label
+        Joint6EditField               matlab.ui.control.NumericEditField
+        SendPoseCommandButton         matlab.ui.control.Button
+        SpeedDropDownLabel            matlab.ui.control.Label
+        SpeedDropDown                 matlab.ui.control.DropDown
+        JoggingTab                    matlab.ui.container.Tab
+        VideoTab                      matlab.ui.container.Tab
+        OpenTableCameraFeedButton     matlab.ui.control.Button
+        OpenConveyorCameraFeedButton  matlab.ui.control.Button
+        ShutdownTab                   matlab.ui.container.Tab
+        MovetohomeButton              matlab.ui.control.Button
+        ShutdownProcedureLabel        matlab.ui.control.Label
+        SetallDIOto0Button            matlab.ui.control.Button
+        DebugTab                      matlab.ui.container.Tab
+        MainfunctiontickLampLabel     matlab.ui.control.Label
+        TickLamp                      matlab.ui.control.Lamp
+        PauseButton                   matlab.ui.control.StateButton
+        ErrorStateText                matlab.ui.control.EditField
+        ERRORLampLabel                matlab.ui.control.Label
+        ERRORLamp                     matlab.ui.control.Lamp
+        CancelButton                  matlab.ui.control.Button
+        ContinueButton                matlab.ui.control.Button
+    end
+
+
+    properties (Access = private)
+        % Timer used for tick callback fucntion
+        tickTimer;
+        tickPeriod = 0.5; % Period of tick timer
+        
+        % Timer used for video update
+        videoTickTimer;
+        videoTickPeriod = 1; % Period of video tick timer
+        
+        % List of data objects
+        % Should always reflect the current status as reported from robot studio
+        
+        % Video objects
+        vidTable;
+        vidCon;
+        VTab;
+        Vcon;
+        %im;
+        
+        % List of status data objects
+        % Should always reflect the current status as reported from robot studio
+        
+        % Joint position objects
+        joint1Pos = 0;
+        joint2Pos = 0;
+        joint3Pos = 0;
+        joint4Pos = 0;
+        joint5Pos = 0;
+        joint6Pos = 0;
+        
+        % End effector position and orientation objects
+        endEffectorX = 0;
+        endEffectorY = 0;
+        endEffectorZ = 0;
+        endEffectorQ1 = 0;
+        endEffectorQ2 = 0;
+        endEffectorQ3 = 0;
+        endEffectorQ4 = 0;
+        
+        % DOI states (0 = off, 1 = on)
+        vacPump = 0; 
+        vacSol = 0;
+        conStat = 0;
+        conRun = 0;
+        conDir = 0;  % (0 = InToCell, 1 = OutOfCell)
+        
+        % Pause, continue & cancel
+        pauseButton;
+        continueButton;
+        cancelButton;
+        
+        % Message Log Objects
+        % Counters used to append new message to bottom of log
+        sentMsgCount = 1;
+        receivedMsgCount = 1;
+        queuedMsgCount = 1;
+        
+        % Pose Tab data objects
+        endEffOriOnly;
+        
+        % Toggle set in tick
+        tickToggle;
+        
+        % the commandQueue and ocmmunications
+        queue = [];
+        % intermediate stage pose
+        Jim = zeros(1,6);
+        socket = 0;
+        connectType = 2;
+        %
+        handles = 0;
+        watchdogTimer = 0;
+    end
+
+    methods (Access = private)
+        
+        % Function for writing to the message logs
+        function [] = WriteToLog(app,log,msg)
+            switch log
+                case 'S'
+                    app.SentLog.Value{app.sentMsgCount} = msg;
+                    app.sentMsgCount = app.sentMsgCount + 1;
+                case 'R'
+                    app.ReceivedLog.Value{app.receivedMsgCount} = msg;
+                    app.receivedMsgCount = app.receivedMsgCount + 1;
+                case 'Q'
+                    app.QueuedLog.Value{app.queuedMsgCount} = msg;
+                    app.queuedMsgCount = app.queuedMsgCount + 1;
+                otherwise
+                    error('Incorrect log string used');
+            end
+        end
+        
+        % Function to write string msg to error state text box and light error lamp
+        function [] = WriteError(app,msg,colour)
+            app.ErrorStateText.Value = msg;
+            app.ERRORLamp.Color = colour;
+        end
+        
+        % Function to clear error state text box and error lamp
+        function [] = ClearError(app)
+            app.ErrorStateText.Value = '';
+            app.ERRORLamp.Color = 'white';
+        end
+        
+        %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        % Tick Callback function (MAIN LOOP) 
+        %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        function TickCallback(app,~,~)
+            % by default just send a status check
+            cmd = createCmdString();
+            
+            % For debugging (flashes lamp on debug page)
+            if (app.tickToggle == 1)
+                app.TickLamp.Color = 'white';
+                app.tickToggle = 0;
+            else
+                app.TickLamp.Color = 'green';
+                app.tickToggle = 1;
+            end
+            
+            %every tick, send a thingy
+            app.queue = sendToQueue(app.queue, cmd);
+            
+            %from the queue
+            app.queue = sendToRobot(app.queue, app.socket);
+        end
+        
+        %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        % MAIN function END ^^^^^^^^
+        %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        
+        % Close Video Figure callback 
+        function  VidFigCloseReq(app,fig,VidName,~,~)
+            selection = questdlg('Close the window?','Confirmation','Yes','No','Yes');
+            switch selection
+                case 'Yes'
+                    delete(fig)
+                    RestartOverviewVideo(app,VidName);
+                case 'No'
+                return
+            end
+        end
+        
+        % Close App Figure? 
+        % If the user confirms then stop the timers and then delete the app
+        function  AppCloseReq(app)
+            selection = questdlg('Close the app?','Confirmation','Yes','No','Yes');
+            switch selection
+                case 'Yes'
+                    StopTimers(app);
+                    delete(app);
+                case 'No'
+                return
+            end
+        end
+        
+        % Kills the app ****
+        function  kill(app)
+            StopTimers(app);
+            delete(app);
+        end
+        
+        % Restart the overview video when the figure is closed
+        function RestartOverviewVideo(app,VidName)
+            if (strcmp(VidName, 'Table'))
+                % Close the preview in the figure
+                closepreview(app.vidTable);
+                % Restart the table overview video
+                StartOverviewVideo(app,VidName);
+            elseif (strcmp(VidName, 'Conveyor'))
+                % Close the preview in the figure
+                closepreview(app.vidConveyor);
+                % Restart the table overview video
+                StartOverviewVideo(app,VidName);
+            else
+                disp('Error in restart requested video name');
+            end
+        end
+        
+        % Start the requested overview video
+        function StartOverviewVideo(app,VidName)
+            if (strcmp(VidName, 'Table'))
+                app.vidTable = videoinput('winvideo', 1);%, 'MJPG_1600x1200');
+                video_resolution1 = app.vidTable.VideoResolution;
+                nbands1 = app.vidTable.NumberOfBands;
+%                 app.handles.TableImage = imshow(zeros([video_resolution1(2), video_resolution1(1), bands]), 'Parent', app.handles.VideoTable2);
+
+                
+                im = imshow(zeros([video_resolution1(2), video_resolution1(1), nbands1]), 'Parent', app.TabVidAxes);
+                preview(app.vidTable,im);
+            elseif (strcmp(VidName, 'Conveyor'))
+                app.vidConveyor = videoinput('winvideo', 2);%, 'MJPG_1600x1200');
+                video_resolution2 = app.vidConveyor.VideoResolution;
+                nbands2 = app.vidConveyor.NumberOfBands;
+%                 handles.TableImage = imshow(zeros([res(2), res(1), bands]), 'Parent', handles.VideoTable2);
+
+                
+                img2 = imshow(zeros([video_resolution2(2), video_resolution2(1), nbands2]), 'Parent', app.ConVidAxes);
+                preview(app.vidConveyor,img2);
+            else
+                disp('Error in start requested video name');
+            end
+        end
+        
+        % Function for gracefully kill all timers. (Thanks to the god that is Image Analyst on mathworks forums)
+        function StopTimers(app)
+            try
+            	%fprintf('Entering StopTimer...\n');
+            	listOfTimers = timerfindall; % List all timers, just for info.
+            	% Get handle to the one timer that we should have.
+            	if isempty(listOfTimers)
+            		% Exit if there is no timer to turn off.
+            		%fprintf('There are no timers to turn off. Leaving StopTimer().\n');
+            		return;
+            	end
+            	% Stop that timer.
+            	stop(app.tickTimer);
+                delete(app.tickTimer);
+            	% Delete all timers from memory.
+            	listOfTimers = timerfindall;
+            	if ~isempty(listOfTimers)
+                        stop(listOfTimers(:));
+            		delete(listOfTimers(:));
+            	end
+            	%fprintf('Left StopTimer and turned off all timers.\n');
+            catch ME
+            	errorMessage = sprintf('Error in StopTimer().\nThe error reported by MATLAB is:\n\n%s', ME.message);
+            	fprintf('%s\n', errorMessage);
+            end
+        end
+        
+        % End of private methods
+    end
+
+
+    methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app)
+            % Show SWP and prompt for confirmation
+            
+            % Start the video feeds
+            % Table Camera
+            try
+                StartOverviewVideo(app, 'Table')
+            catch
+                warning('Problem starting table camera');
+            end
+            % Conveyor Camera
+            try
+                StartOverviewVideo(app, 'Conveyor')
+            catch 
+                warning('Problem starting conveyor camera');
+            end
+            
+            % End all timers in memory
+            delete(timerfind);
+            
+            % Init the robot arm status/position tables
+            app.JointAngleTable.Data = {'J1', app.joint1Pos; 'J2', app.joint2Pos; 'J3', app.joint3Pos; 'J4', app.joint4Pos; 'J5', app.joint5Pos; 'J6', app.joint6Pos};  
+            app.EEPositionTable.Data = {'X', app.endEffectorX; 'Y', app.endEffectorY; 'Z', app.endEffectorZ};
+            app.EEOrientationTable.Data = {'Q1', app.endEffectorQ1; 'Q2', app.endEffectorQ2; 'Q3', app.endEffectorQ3; 'Q4', app.endEffectorQ4};
+            
+            % Init the DOI buttons
+            app.PumpButton.Value = 0;
+            app.PumpButton.BackgroundColor = 'red';
+            app.SolenoidButton.Value = 0;
+            app.SolenoidButton.Enable = 'off';
+            app.SolenoidButton.BackgroundColor = 'red';
+            app.ConStatusButton.Value = 0;
+            app.ConStatusButton.BackgroundColor = 'red';
+            app.ConRunButton.Value = 0;
+            app.ConRunButton.Enable = 'off';
+            app.ConRunButton.BackgroundColor = 'red';
+            app.IntocellButton.Value = 1;
+            
+            % Init the message logs
+            message = 'This is the beginning of the sent message log';
+            WriteToLog(app, 'S', message);
+            message = 'This is the beginning of the received message log';
+            WriteToLog(app, 'R', message);
+            message = 'This is the beginning of the queued message log';
+            WriteToLog(app, 'Q', message);
+            
+            % Init continue button
+            app.ContinueButton.Enable = 'Off';
+            
+            % Init the timer for the tick callback function
+            app.tickTimer = timer('StartDelay', 5, 'Period', app.tickPeriod,'ExecutionMode', 'fixedRate','TasksToExecute', Inf,'BusyMode','drop');
+            app.tickTimer.TimerFcn = @(obj,event)app.TickCallback(app);
+            start(app.tickTimer);
+            
+            % Init the tick toggle
+            app.tickToggle = 0;
+            
+            % Init the timer for the video tick callback function
+            %app.videoTickTimer = timer('StartDelay', 4, 'Period', app.videoTickPeriod,'ExecutionMode', 'fixedRate','TasksToExecute', Inf,'BusyMode','error');
+            %app.videoTickTimer.TimerFcn = @(obj,event)app.VideoTickCallback(app);
+            %start(app.videoTickTimer);
+            
+            %------------ STEVEN - ATTEMPTING CONNECTION ---------------------%
+            
+            
+             [app.socket, app.connectType] = startConnectionToRobot();
+            
+%             if (app.connectType == 2) %2 is an error
+%                 
+%                 kill(app)
+%                 
+%             end
+
+            %----------- STEVEN ---------------------%
+
+            
+            
+            %------------------------------------------------------------------
+            
+            
+        end
+
+        % Button pushed function: CancelButton
+        function CancelButtonPushed(app, event)
+            % Add cancel motion task function call here
+            % ret = CancelMotionTask()
+        end
+
+        % Value changed function: ConRunButton
+        function ConRunButtonValueChanged(app, event)
+            value = app.ConRunButton.Value;
+            
+            % Only store the value if Con Stat is 1
+            if (app.conStat == 0)
+                app.ConRunButton.Value = 0;
+            else
+                app.conRun = value;
+            end
+            
+            % Set the colour
+            if (app.conRun == 1)
+                app.ConRunButton.BackgroundColor = 'green';
+            else
+                app.ConRunButton.BackgroundColor = 'red';
+            end
+        end
+
+        % Value changed function: ConStatusButton
+        function ConStatusButtonValueChanged(app, event)
+            value = app.ConStatusButton.Value;
+            
+            % Store the value
+            app.conStat = value;
+            
+            % Set the colour
+            if (app.conStat == 1)
+                app.ConStatusButton.BackgroundColor = 'green';
+                
+                % Enable the conRun button
+                app.ConRunButton.Enable = 'on';
+            else
+                app.ConStatusButton.BackgroundColor = 'red';
+                
+                % Disable the conRun button and set to 0
+                app.ConRunButton.Enable = 'off';
+                app.ConRunButton.Value = 0;
+                app.ConRunButton.BackgroundColor = 'red';
+                app.conRun = 0;
+            end
+        end
+
+        % Button pushed function: ContinueButton
+        function ContinueButtonPushed(app, event)
+            app.continueButton = 1;
+            if (app.continueButton == 1)
+                % Call continue function here (Should return 0 on success, 1 on failure)
+                % ret = ContinueFunction()
+                ret = 0;
+                if (ret == 0)
+                    app.ContinueButton.BackgroundColor = 'white';
+                    app.ContinueButton.Enable = 'Off';
+                else
+                    % Continue failed
+                    % Do nothing? Write to log?
+                end
+            end
+        end
+
+        % Selection changed function: DirectionButtonGroup
+        function DirectionButtonGroupSelectionChanged(app, event)
+            selectedButton = app.DirectionButtonGroup.SelectedObject;
+            
+            if (selectedButton == app.IntocellButton)
+                app.conDir = 0;
+                %send to
+            elseif (selectedButton == app.OutofcellButton)
+                app.conDir = 1;
+            end
+            
+        end
+
+        % Value changed function: EndEffOriOnlySwitch
+        function EndEffOriOnlySwitchValueChanged(app, event)
+            value = app.EndEffOriOnlySwitch.Value;
+            
+            app.endEffOriOnly = value;
+            
+            if (strcmp(app.endEffOriOnly,'On'))
+                app.XEditField.Enable = 'Off';
+                app.YEditField.Enable = 'Off';
+                app.ZEditField.Enable = 'Off';
+            else
+                app.XEditField.Enable = 'On';
+                app.YEditField.Enable = 'On';
+                app.ZEditField.Enable = 'On';
+            end
+        end
+
+        % Button pushed function: OpenConveyorCameraFeedButton
+        function OpenConveyorCameraFeedButtonPushed(app, event)
+            % Close the video feed from the overview tab
+            closepreview(app.vidConveyor);
+            
+            % Prepare the video to be shown in the new figure
+            fig = uifigure('Name','Table Camera Feed', 'CloseRequestFcn',@(fig, event)VidFigCloseReq(app,fig,'Conveyor'));
+            VidAxes = uiaxes(fig);
+            video_resolution1 = app.vidConveyor.VideoResolution;
+            nbands1 = app.vidConveyor.NumberOfBands;
+            im = imshow(zeros([video_resolution1(2), video_resolution1(1), nbands1]), 'Parent', VidAxes);
+            
+            
+            
+            preview(app.vidConveyor,im);
+        end
+
+        % Button pushed function: OpenTableCameraFeedButton
+        function OpenTableCameraFeedButtonPushed(app, event)
+            % Close the video feed from the overview tab
+            closepreview(app.vidTable);
+            
+            % Prepare the video to be shown in the new figure
+            fig = uifigure('Name','Table Camera Feed', 'CloseRequestFcn',@(fig, event)VidFigCloseReq(app,fig,'Table'));
+            VidAxes = uiaxes(fig);
+            video_resolution1 = app.vidTable.VideoResolution;
+            nbands1 = app.vidTable.NumberOfBands;
+            im = imshow(zeros([video_resolution1(2), video_resolution1(1), nbands1]), 'Parent', VidAxes);
+            preview(app.vidTable,im);
+        end
+
+        % Value changed function: PauseButton
+        function PauseButtonValueChanged(app, event)
+            value = app.PauseButton.Value;
+            
+            app.pauseButton = value;
+            
+            if (app.pauseButton == 1)
+                app.PauseButton.BackgroundColor = 'red';
+                app.ContinueButton.Enable = 'Off';
+                app.ContinueButton.BackgroundColor = 'white';
+                % Call pause function here
+                
+            else
+                app.PauseButton.BackgroundColor = 'white';
+                app.ContinueButton.Enable = 'On';
+                app.ContinueButton.BackgroundColor = 'yellow';
+            end
+        end
+
+        % Value changed function: PumpButton
+        function PumpButtonValueChanged(app, event)
+            value = app.PumpButton.Value;
+            
+            % Store the value
+            app.vacPump = value;
+            
+            % Change the button colour
+            if (app.vacPump == 1)
+                app.PumpButton.BackgroundColor = 'green';
+                
+                % Enable the solenoid button
+                app.SolenoidButton.Enable = 'on';
+                
+            else
+                app.PumpButton.BackgroundColor = 'red';
+                
+                % Disable the solenoid button and set to 0
+                app.SolenoidButton.Enable = 'off';
+                app.SolenoidButton.Value = 0;
+                app.SolenoidButton.BackgroundColor = 'red';
+            end
+        end
+
+        % Button pushed function: SendPoseCommandButton
+        function SendPoseCommandButtonPushed(app, event)
+            
+        end
+
+        % Button pushed function: SendPositionCommandButton
+        function SendPositionCommandButtonPushed(app, event)
+            % Read values in from UI (Relative to what, position, orientation only)
+            % Call move to position command/change orientation function
+            app.Q1EditFeild.Value
+            
+        end
+
+        % Value changed function: SolenoidButton
+        function SolenoidButtonValueChanged(app, event)
+            value = app.SolenoidButton.Value;
+            
+            % Only change the sol button if the pump is running
+            if (app.vacPump == 0)
+                app.SolenoidButton.Value = 0;
+            else
+                app.vacSol = value;
+            end
+            
+            % Set the colour
+            if (app.vacSol == 1)
+                app.SolenoidButton.BackgroundColor = 'green';
+            else
+                app.SolenoidButton.BackgroundColor = 'red';
+            end
+        end
+
+        % Close request function: UIFigure
+        function UIFigureCloseRequest(app, event)
+            AppCloseReq(app);
+        end
+    end
+
+    % App initialization and construction
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure
+            app.UIFigure = uifigure;
+            app.UIFigure.Position = [100 100 813 565];
+            app.UIFigure.Name = 'UI Figure';
+            app.UIFigure.CloseRequestFcn = createCallbackFcn(app, @UIFigureCloseRequest, true);
+
+            % Create TabGroup
+            app.TabGroup = uitabgroup(app.UIFigure);
+            app.TabGroup.Position = [1 1 813 535];
+
+            % Create OverviewTab
+            app.OverviewTab = uitab(app.TabGroup);
+            app.OverviewTab.Title = 'Overview';
+
+            % Create JointAngleTable
+            app.JointAngleTable = uitable(app.OverviewTab);
+            app.JointAngleTable.ColumnName = {'Joints'; 'Current Angle'};
+            app.JointAngleTable.ColumnWidth = {45, 85};
+            app.JointAngleTable.RowName = {};
+            app.JointAngleTable.FontName = 'MS Sans Serif';
+            app.JointAngleTable.Position = [389 325 130 131];
+
+            % Create CurrentJointAnglesLabel
+            app.CurrentJointAnglesLabel = uilabel(app.OverviewTab);
+            app.CurrentJointAnglesLabel.VerticalAlignment = 'top';
+            app.CurrentJointAnglesLabel.Position = [396 457 115 15];
+            app.CurrentJointAnglesLabel.Text = 'Current Joint Angles';
+
+            % Create EEPositionTable
+            app.EEPositionTable = uitable(app.OverviewTab);
+            app.EEPositionTable.ColumnName = {'Position'; 'Value'};
+            app.EEPositionTable.ColumnWidth = {60, 60};
+            app.EEPositionTable.RowName = {};
+            app.EEPositionTable.FontName = 'MS Sans Serif';
+            app.EEPositionTable.Position = [526 378 121 78];
+
+            % Create EEPositionLabel
+            app.EEPositionLabel = uilabel(app.OverviewTab);
+            app.EEPositionLabel.VerticalAlignment = 'top';
+            app.EEPositionLabel.Position = [553 457 67 15];
+            app.EEPositionLabel.Text = 'EE Position';
+
+            % Create EEOrientationTable
+            app.EEOrientationTable = uitable(app.OverviewTab);
+            app.EEOrientationTable.ColumnName = {'Orientation'; 'Value'};
+            app.EEOrientationTable.ColumnWidth = {70, 50};
+            app.EEOrientationTable.RowName = {};
+            app.EEOrientationTable.FontName = 'MS Sans Serif';
+            app.EEOrientationTable.Position = [655 361 121 95];
+
+            % Create EEOrientationLabel
+            app.EEOrientationLabel = uilabel(app.OverviewTab);
+            app.EEOrientationLabel.VerticalAlignment = 'top';
+            app.EEOrientationLabel.Position = [674 457 83 15];
+            app.EEOrientationLabel.Text = 'EE Orientation';
+
+            % Create DIOStatesLabel
+            app.DIOStatesLabel = uilabel(app.OverviewTab);
+            app.DIOStatesLabel.HorizontalAlignment = 'center';
+            app.DIOStatesLabel.VerticalAlignment = 'top';
+            app.DIOStatesLabel.FontSize = 18;
+            app.DIOStatesLabel.Position = [536 268 93 23];
+            app.DIOStatesLabel.Text = 'DIO States';
+
+            % Create PumpButton
+            app.PumpButton = uibutton(app.OverviewTab, 'state');
+            app.PumpButton.ValueChangedFcn = createCallbackFcn(app, @PumpButtonValueChanged, true);
+            app.PumpButton.Text = 'Pump';
+            app.PumpButton.BackgroundColor = [1 1 1];
+            app.PumpButton.FontWeight = 'bold';
+            app.PumpButton.Position = [384 221 100 22];
+
+            % Create VacuumLabel
+            app.VacuumLabel = uilabel(app.OverviewTab);
+            app.VacuumLabel.HorizontalAlignment = 'center';
+            app.VacuumLabel.VerticalAlignment = 'top';
+            app.VacuumLabel.FontSize = 14;
+            app.VacuumLabel.FontWeight = 'bold';
+            app.VacuumLabel.Position = [405 249 59 19];
+            app.VacuumLabel.Text = 'Vacuum';
+
+            % Create SolenoidButton
+            app.SolenoidButton = uibutton(app.OverviewTab, 'state');
+            app.SolenoidButton.ValueChangedFcn = createCallbackFcn(app, @SolenoidButtonValueChanged, true);
+            app.SolenoidButton.Text = 'Solenoid';
+            app.SolenoidButton.BackgroundColor = [1 1 1];
+            app.SolenoidButton.FontWeight = 'bold';
+            app.SolenoidButton.Position = [384 196 100 22];
+
+            % Create ConveyorLabel
+            app.ConveyorLabel = uilabel(app.OverviewTab);
+            app.ConveyorLabel.HorizontalAlignment = 'center';
+            app.ConveyorLabel.VerticalAlignment = 'top';
+            app.ConveyorLabel.FontSize = 14;
+            app.ConveyorLabel.FontWeight = 'bold';
+            app.ConveyorLabel.Position = [549 251 69 19];
+            app.ConveyorLabel.Text = 'Conveyor';
+
+            % Create ConStatusButton
+            app.ConStatusButton = uibutton(app.OverviewTab, 'state');
+            app.ConStatusButton.ValueChangedFcn = createCallbackFcn(app, @ConStatusButtonValueChanged, true);
+            app.ConStatusButton.Text = 'Status';
+            app.ConStatusButton.BackgroundColor = [1 1 1];
+            app.ConStatusButton.FontWeight = 'bold';
+            app.ConStatusButton.Position = [534 222 100 22];
+
+            % Create ConRunButton
+            app.ConRunButton = uibutton(app.OverviewTab, 'state');
+            app.ConRunButton.ValueChangedFcn = createCallbackFcn(app, @ConRunButtonValueChanged, true);
+            app.ConRunButton.Text = 'Run';
+            app.ConRunButton.BackgroundColor = [1 1 1];
+            app.ConRunButton.FontWeight = 'bold';
+            app.ConRunButton.Position = [534 197 100 22];
+
+            % Create DirectionButtonGroup
+            app.DirectionButtonGroup = uibuttongroup(app.OverviewTab);
+            app.DirectionButtonGroup.SelectionChangedFcn = createCallbackFcn(app, @DirectionButtonGroupSelectionChanged, true);
+            app.DirectionButtonGroup.BorderType = 'none';
+            app.DirectionButtonGroup.TitlePosition = 'centertop';
+            app.DirectionButtonGroup.Title = 'Direction';
+            app.DirectionButtonGroup.FontName = 'MS Sans Serif';
+            app.DirectionButtonGroup.FontWeight = 'bold';
+            app.DirectionButtonGroup.FontSize = 14;
+            app.DirectionButtonGroup.Position = [676 190 111 77];
+
+            % Create IntocellButton
+            app.IntocellButton = uitogglebutton(app.DirectionButtonGroup);
+            app.IntocellButton.Text = 'In to cell';
+            app.IntocellButton.Position = [7 33 100 22];
+            app.IntocellButton.Value = true;
+
+            % Create OutofcellButton
+            app.OutofcellButton = uitogglebutton(app.DirectionButtonGroup);
+            app.OutofcellButton.Text = 'Out of cell';
+            app.OutofcellButton.Position = [7 6 100 22];
+
+            % Create TabGroup2
+            app.TabGroup2 = uitabgroup(app.OverviewTab);
+            app.TabGroup2.Position = [384 17 398 145];
+
+            % Create SentTab
+            app.SentTab = uitab(app.TabGroup2);
+            app.SentTab.Title = 'Sent';
+
+            % Create SentLog
+            app.SentLog = uitextarea(app.SentTab);
+            app.SentLog.Editable = 'off';
+            app.SentLog.Position = [15 13 368 97];
+
+            % Create ReceivedTab
+            app.ReceivedTab = uitab(app.TabGroup2);
+            app.ReceivedTab.Title = 'Received';
+
+            % Create ReceivedLog
+            app.ReceivedLog = uitextarea(app.ReceivedTab);
+            app.ReceivedLog.Editable = 'off';
+            app.ReceivedLog.Position = [15 13 368 97];
+
+            % Create QueuedTab
+            app.QueuedTab = uitab(app.TabGroup2);
+            app.QueuedTab.Title = 'Queued';
+
+            % Create QueuedLog
+            app.QueuedLog = uitextarea(app.QueuedTab);
+            app.QueuedLog.Editable = 'off';
+            app.QueuedLog.Position = [15 13 368 97];
+
+            % Create MessageLogLabel
+            app.MessageLogLabel = uilabel(app.OverviewTab);
+            app.MessageLogLabel.HorizontalAlignment = 'center';
+            app.MessageLogLabel.VerticalAlignment = 'top';
+            app.MessageLogLabel.FontSize = 14;
+            app.MessageLogLabel.FontWeight = 'bold';
+            app.MessageLogLabel.Position = [535 164 95 19];
+            app.MessageLogLabel.Text = 'Message Log';
+
+            % Create RobotStatusLabel
+            app.RobotStatusLabel = uilabel(app.OverviewTab);
+            app.RobotStatusLabel.VerticalAlignment = 'top';
+            app.RobotStatusLabel.FontSize = 18;
+            app.RobotStatusLabel.Position = [530 477 112 23];
+            app.RobotStatusLabel.Text = 'Robot Status';
+
+            % Create TabVidAxes
+            app.TabVidAxes = uiaxes(app.OverviewTab);
+            title(app.TabVidAxes, 'Table Video')
+            app.TabVidAxes.Position = [29 243 300 185];
+
+            % Create ConVidAxes
+            app.ConVidAxes = uiaxes(app.OverviewTab);
+            title(app.ConVidAxes, 'Conveyor Video')
+            app.ConVidAxes.Position = [29 30 300 185];
+
+            % Create PoseTab
+            app.PoseTab = uitab(app.TabGroup);
+            app.PoseTab.Title = 'Pose';
+
+            % Create MovetoPositionPanel
+            app.MovetoPositionPanel = uipanel(app.PoseTab);
+            app.MovetoPositionPanel.TitlePosition = 'centertop';
+            app.MovetoPositionPanel.Title = 'Move to Position';
+            app.MovetoPositionPanel.FontName = 'MS Sans Serif';
+            app.MovetoPositionPanel.FontWeight = 'bold';
+            app.MovetoPositionPanel.FontSize = 14;
+            app.MovetoPositionPanel.Position = [38 129 260 360];
+
+            % Create RelativetoHomeButtonGroup
+            app.RelativetoHomeButtonGroup = uibuttongroup(app.MovetoPositionPanel);
+            app.RelativetoHomeButtonGroup.BorderType = 'none';
+            app.RelativetoHomeButtonGroup.TitlePosition = 'centertop';
+            app.RelativetoHomeButtonGroup.Title = 'Relative to Home';
+            app.RelativetoHomeButtonGroup.FontName = 'MS Sans Serif';
+            app.RelativetoHomeButtonGroup.Position = [18 280 224 53];
+
+            % Create TableButton
+            app.TableButton = uitogglebutton(app.RelativetoHomeButtonGroup);
+            app.TableButton.Text = 'Table';
+            app.TableButton.Position = [10 6 100 22];
+            app.TableButton.Value = true;
+
+            % Create ConveyorButton
+            app.ConveyorButton = uitogglebutton(app.RelativetoHomeButtonGroup);
+            app.ConveyorButton.Text = 'Conveyor';
+            app.ConveyorButton.Position = [114 6 100 22];
+
+            % Create XEditFieldLabel
+            app.XEditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.XEditFieldLabel.HorizontalAlignment = 'right';
+            app.XEditFieldLabel.VerticalAlignment = 'top';
+            app.XEditFieldLabel.Position = [55 251 25 15];
+            app.XEditFieldLabel.Text = 'X';
+
+            % Create XEditField
+            app.XEditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.XEditField.Position = [95 247 100 22];
+
+            % Create YEditFieldLabel
+            app.YEditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.YEditFieldLabel.HorizontalAlignment = 'right';
+            app.YEditFieldLabel.VerticalAlignment = 'top';
+            app.YEditFieldLabel.Position = [55 225 25 15];
+            app.YEditFieldLabel.Text = 'Y';
+
+            % Create YEditField
+            app.YEditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.YEditField.Position = [95 221 100 22];
+
+            % Create ZEditFieldLabel
+            app.ZEditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.ZEditFieldLabel.HorizontalAlignment = 'right';
+            app.ZEditFieldLabel.VerticalAlignment = 'top';
+            app.ZEditFieldLabel.Position = [55 199 25 15];
+            app.ZEditFieldLabel.Text = 'Z';
+
+            % Create ZEditField
+            app.ZEditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.ZEditField.Position = [95 195 100 22];
+
+            % Create Q1EditFieldLabel
+            app.Q1EditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.Q1EditFieldLabel.HorizontalAlignment = 'right';
+            app.Q1EditFieldLabel.VerticalAlignment = 'top';
+            app.Q1EditFieldLabel.Position = [55 173 25 15];
+            app.Q1EditFieldLabel.Text = 'Q1';
+
+            % Create Q1EditField
+            app.Q1EditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.Q1EditField.Position = [95 169 100 22];
+
+            % Create Q2EditFieldLabel
+            app.Q2EditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.Q2EditFieldLabel.HorizontalAlignment = 'right';
+            app.Q2EditFieldLabel.VerticalAlignment = 'top';
+            app.Q2EditFieldLabel.Position = [55 147 25 15];
+            app.Q2EditFieldLabel.Text = 'Q2';
+
+            % Create Q2EditField
+            app.Q2EditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.Q2EditField.Position = [95 143 100 22];
+
+            % Create Q3EditFieldLabel
+            app.Q3EditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.Q3EditFieldLabel.HorizontalAlignment = 'right';
+            app.Q3EditFieldLabel.VerticalAlignment = 'top';
+            app.Q3EditFieldLabel.Position = [55 121 25 15];
+            app.Q3EditFieldLabel.Text = 'Q3';
+
+            % Create Q3EditField
+            app.Q3EditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.Q3EditField.Position = [95 117 100 22];
+
+            % Create Q4EditFieldLabel
+            app.Q4EditFieldLabel = uilabel(app.MovetoPositionPanel);
+            app.Q4EditFieldLabel.HorizontalAlignment = 'right';
+            app.Q4EditFieldLabel.VerticalAlignment = 'top';
+            app.Q4EditFieldLabel.Position = [55 95 25 15];
+            app.Q4EditFieldLabel.Text = 'Q4';
+
+            % Create Q4EditField
+            app.Q4EditField = uieditfield(app.MovetoPositionPanel, 'numeric');
+            app.Q4EditField.Position = [95 91 100 22];
+
+            % Create EndEffectorOrientationOnlySwitchLabel
+            app.EndEffectorOrientationOnlySwitchLabel = uilabel(app.MovetoPositionPanel);
+            app.EndEffectorOrientationOnlySwitchLabel.HorizontalAlignment = 'center';
+            app.EndEffectorOrientationOnlySwitchLabel.VerticalAlignment = 'top';
+            app.EndEffectorOrientationOnlySwitchLabel.Position = [49 65 162 15];
+            app.EndEffectorOrientationOnlySwitchLabel.Text = 'End Effector Orientation Only';
+
+            % Create EndEffOriOnlySwitch
+            app.EndEffOriOnlySwitch = uiswitch(app.MovetoPositionPanel, 'slider');
+            app.EndEffOriOnlySwitch.ValueChangedFcn = createCallbackFcn(app, @EndEffOriOnlySwitchValueChanged, true);
+            app.EndEffOriOnlySwitch.Position = [107 42 45 20];
+
+            % Create SendPositionCommandButton
+            app.SendPositionCommandButton = uibutton(app.MovetoPositionPanel, 'push');
+            app.SendPositionCommandButton.ButtonPushedFcn = createCallbackFcn(app, @SendPositionCommandButtonPushed, true);
+            app.SendPositionCommandButton.Position = [50 11 150 22];
+            app.SendPositionCommandButton.Text = 'Send Position Command';
+
+            % Create MovetoPosePanel
+            app.MovetoPosePanel = uipanel(app.PoseTab);
+            app.MovetoPosePanel.TitlePosition = 'centertop';
+            app.MovetoPosePanel.Title = 'Move to Pose';
+            app.MovetoPosePanel.FontName = 'MS Sans Serif';
+            app.MovetoPosePanel.FontWeight = 'bold';
+            app.MovetoPosePanel.FontSize = 14;
+            app.MovetoPosePanel.Position = [328 262 260 227];
+
+            % Create Joint1EditFieldLabel
+            app.Joint1EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint1EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint1EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint1EditFieldLabel.Position = [51 177 42 15];
+            app.Joint1EditFieldLabel.Text = 'Joint 1';
+
+            % Create Joint1EditField
+            app.Joint1EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint1EditField.Position = [108 173 100 22];
+
+            % Create Joint2EditFieldLabel
+            app.Joint2EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint2EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint2EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint2EditFieldLabel.Position = [51 151 42 15];
+            app.Joint2EditFieldLabel.Text = 'Joint 2';
+
+            % Create Joint2EditField
+            app.Joint2EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint2EditField.Position = [108 147 100 22];
+
+            % Create Joint3EditFieldLabel
+            app.Joint3EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint3EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint3EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint3EditFieldLabel.Position = [51 125 42 15];
+            app.Joint3EditFieldLabel.Text = 'Joint 3';
+
+            % Create Joint3EditField
+            app.Joint3EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint3EditField.Position = [108 121 100 22];
+
+            % Create Joint4EditFieldLabel
+            app.Joint4EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint4EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint4EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint4EditFieldLabel.Position = [51 98 42 15];
+            app.Joint4EditFieldLabel.Text = 'Joint 4';
+
+            % Create Joint4EditField
+            app.Joint4EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint4EditField.Position = [108 94 100 22];
+
+            % Create Joint5EditFieldLabel
+            app.Joint5EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint5EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint5EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint5EditFieldLabel.Position = [51 72 42 15];
+            app.Joint5EditFieldLabel.Text = 'Joint 5';
+
+            % Create Joint5EditField
+            app.Joint5EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint5EditField.Position = [108 68 100 22];
+
+            % Create Joint6EditFieldLabel
+            app.Joint6EditFieldLabel = uilabel(app.MovetoPosePanel);
+            app.Joint6EditFieldLabel.HorizontalAlignment = 'right';
+            app.Joint6EditFieldLabel.VerticalAlignment = 'top';
+            app.Joint6EditFieldLabel.Position = [51 46 42 15];
+            app.Joint6EditFieldLabel.Text = 'Joint 6';
+
+            % Create Joint6EditField
+            app.Joint6EditField = uieditfield(app.MovetoPosePanel, 'numeric');
+            app.Joint6EditField.Position = [108 42 100 22];
+
+            % Create SendPoseCommandButton
+            app.SendPoseCommandButton = uibutton(app.MovetoPosePanel, 'push');
+            app.SendPoseCommandButton.ButtonPushedFcn = createCallbackFcn(app, @SendPoseCommandButtonPushed, true);
+            app.SendPoseCommandButton.Position = [63 10 134 22];
+            app.SendPoseCommandButton.Text = 'Send Pose Command';
+
+            % Create SpeedDropDownLabel
+            app.SpeedDropDownLabel = uilabel(app.PoseTab);
+            app.SpeedDropDownLabel.HorizontalAlignment = 'right';
+            app.SpeedDropDownLabel.VerticalAlignment = 'top';
+            app.SpeedDropDownLabel.Position = [380 212 40 15];
+            app.SpeedDropDownLabel.Text = 'Speed';
+
+            % Create SpeedDropDown
+            app.SpeedDropDown = uidropdown(app.PoseTab);
+            app.SpeedDropDown.Items = {'100%', '75%', '50%', '25%'};
+            app.SpeedDropDown.Position = [435 208 100 22];
+            app.SpeedDropDown.Value = '100%';
+
+            % Create JoggingTab
+            app.JoggingTab = uitab(app.TabGroup);
+            app.JoggingTab.Title = 'Jogging';
+
+            % Create VideoTab
+            app.VideoTab = uitab(app.TabGroup);
+            app.VideoTab.Title = 'Video';
+
+            % Create OpenTableCameraFeedButton
+            app.OpenTableCameraFeedButton = uibutton(app.VideoTab, 'push');
+            app.OpenTableCameraFeedButton.ButtonPushedFcn = createCallbackFcn(app, @OpenTableCameraFeedButtonPushed, true);
+            app.OpenTableCameraFeedButton.Position = [177 399 152 22];
+            app.OpenTableCameraFeedButton.Text = 'Open Table Camera Feed';
+
+            % Create OpenConveyorCameraFeedButton
+            app.OpenConveyorCameraFeedButton = uibutton(app.VideoTab, 'push');
+            app.OpenConveyorCameraFeedButton.ButtonPushedFcn = createCallbackFcn(app, @OpenConveyorCameraFeedButtonPushed, true);
+            app.OpenConveyorCameraFeedButton.Position = [414 399 176 22];
+            app.OpenConveyorCameraFeedButton.Text = 'Open Conveyor Camera Feed';
+
+            % Create ShutdownTab
+            app.ShutdownTab = uitab(app.TabGroup);
+            app.ShutdownTab.Title = 'Shutdown';
+
+            % Create MovetohomeButton
+            app.MovetohomeButton = uibutton(app.ShutdownTab, 'push');
+            app.MovetohomeButton.Position = [357 412 100 22];
+            app.MovetohomeButton.Text = 'Move to home';
+
+            % Create ShutdownProcedureLabel
+            app.ShutdownProcedureLabel = uilabel(app.ShutdownTab);
+            app.ShutdownProcedureLabel.VerticalAlignment = 'top';
+            app.ShutdownProcedureLabel.FontSize = 14;
+            app.ShutdownProcedureLabel.FontWeight = 'bold';
+            app.ShutdownProcedureLabel.Position = [334 454 146 19];
+            app.ShutdownProcedureLabel.Text = 'Shutdown Procedure';
+
+            % Create SetallDIOto0Button
+            app.SetallDIOto0Button = uibutton(app.ShutdownTab, 'push');
+            app.SetallDIOto0Button.Position = [357 371 100 22];
+            app.SetallDIOto0Button.Text = 'Set all DIO to 0';
+
+            % Create DebugTab
+            app.DebugTab = uitab(app.TabGroup);
+            app.DebugTab.Title = 'Debug';
+
+            % Create MainfunctiontickLampLabel
+            app.MainfunctiontickLampLabel = uilabel(app.DebugTab);
+            app.MainfunctiontickLampLabel.HorizontalAlignment = 'right';
+            app.MainfunctiontickLampLabel.VerticalAlignment = 'top';
+            app.MainfunctiontickLampLabel.Position = [70 445 101 15];
+            app.MainfunctiontickLampLabel.Text = 'Main function tick';
+
+            % Create TickLamp
+            app.TickLamp = uilamp(app.DebugTab);
+            app.TickLamp.Position = [186 442 20 20];
+
+            % Create PauseButton
+            app.PauseButton = uibutton(app.UIFigure, 'state');
+            app.PauseButton.ValueChangedFcn = createCallbackFcn(app, @PauseButtonValueChanged, true);
+            app.PauseButton.Text = 'Pause';
+            app.PauseButton.BackgroundColor = [1 1 1];
+            app.PauseButton.Position = [15 539 100 22];
+
+            % Create ErrorStateText
+            app.ErrorStateText = uieditfield(app.UIFigure, 'text');
+            app.ErrorStateText.Editable = 'off';
+            app.ErrorStateText.Position = [406 539 405 22];
+
+            % Create ERRORLampLabel
+            app.ERRORLampLabel = uilabel(app.UIFigure);
+            app.ERRORLampLabel.HorizontalAlignment = 'center';
+            app.ERRORLampLabel.VerticalAlignment = 'top';
+            app.ERRORLampLabel.FontWeight = 'bold';
+            app.ERRORLampLabel.Position = [329 543 49 15];
+            app.ERRORLampLabel.Text = 'ERROR';
+
+            % Create ERRORLamp
+            app.ERRORLamp = uilamp(app.UIFigure);
+            app.ERRORLamp.Position = [377 538 25 25];
+            app.ERRORLamp.Color = [0.902 0.902 0.902];
+
+            % Create CancelButton
+            app.CancelButton = uibutton(app.UIFigure, 'push');
+            app.CancelButton.ButtonPushedFcn = createCallbackFcn(app, @CancelButtonPushed, true);
+            app.CancelButton.BackgroundColor = [1 1 1];
+            app.CancelButton.Position = [223 539 100 22];
+            app.CancelButton.Text = 'Cancel';
+
+            % Create ContinueButton
+            app.ContinueButton = uibutton(app.UIFigure, 'push');
+            app.ContinueButton.ButtonPushedFcn = createCallbackFcn(app, @ContinueButtonPushed, true);
+            app.ContinueButton.BackgroundColor = [1 1 1];
+            app.ContinueButton.Position = [119 539 100 22];
+            app.ContinueButton.Text = 'Continue';
+        end
+    end
+
+    methods (Access = public)
+
+        % Construct app
+        function app = Assignment2GUI_temp
+
+            % Create and configure components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @startupFcn)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end]]></w:t></w:r></w:p></w:body></w:document>
