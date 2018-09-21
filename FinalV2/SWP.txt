@@ -1,0 +1,17 @@
+The following procedures must be followed before operating the IRB-120
+1. Check the robot cell is clear of unnecessary objects
+2. Two people must be present to operate the robot (one must have passed demonstrator induction)
+3. The light curtain must be correctly working end enabled
+4. Emergency stops must be acknowledged and appropriate action taken to rectify
+5. Robot must be in manual mode only
+6. Motors must be turned on
+7. The Flex Pendant must not enter the robot cell
+8. Power isolation switches must be turned on and not padlocked
+9. If anything seems wrong or broken with the robot cease use immediately and inform Jim or Steve
+10. Enclosed shoes must be worn
+11. Long hair must be tied up
+12. The robot can only be used between 8am and 6pm on Monday to Friday
+
+The full SWP can be found on Moodle/SafeSys
+
+By pressing accept you agree that these procedures have been met and that you have been inducted to use the robot
