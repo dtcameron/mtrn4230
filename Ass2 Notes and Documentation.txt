@@ -393,7 +393,8 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
          decodes the message coming back from RS
          gives a status struct, binary safety and DIO, joints in raw data form
 
-      
+      SafetySystem(app,safety)
+     	 displays error message and turns error lamp to red
       
       joints = decodeJoints(char jointData)
          decodes the joint data from char
