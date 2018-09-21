@@ -322,8 +322,22 @@ BYTE |	 1   |     2     |    3   |  4  5 |  6  7 | 8  9 | 10  11 | 12  13 | 14  
       
       Pose Functions
       -------------------
-      [x ,y ,z] = findJAnglesToPos()
-
+       function SendPositionCommandButtonPushed(app, event)
+       % This function is called when the pose required to be calculated for
+       % base frame and the target position co-ordinates are given w.r.t Table 
+       % or Conveyer home. The function uses transformation matrices to calculate
+       % pose and use inverse kinematics to calculate the required joint angles.
+       % The GUI also has a toggle switch to reorient the end effector which is also
+       % done through this function
+       
+        function SendPoseCommandButtonPushed(app, event)
+	% This is a basic input function where the joint angles input by the user
+	% are normalized and sent to the queue for the robot.
+	
+	function [x,y,z,roll,pitch,yaw] = EndEffectorPose()
+	% This function is used to display the real-time position and orientation
+	% of the end-effector based on the joint angle data being received from
+	% the robot.
       
       
       DIO Functions
