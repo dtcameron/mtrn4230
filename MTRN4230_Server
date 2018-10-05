@@ -9,11 +9,13 @@ MODULE server
     PERS robjoint joints := [0,0,0,0,0,0];
     PERS num joggingjoints{6} := [0,0,0,0,0,0];
     PERS num jogdir{3} := [0,0,0];
-    PERS speeddata speed := v100;
+    PERS robtarget target_pos;
+    PERS speeddata speed;
     
     CONST num port := 1025;
     
     PROC Main ()
+        speed := v100;
         IF RobOS() THEN
             host := "192.168.125.1";
         ELSE
@@ -37,6 +39,11 @@ MODULE server
     ENDPROC
     
     PROC AwaitMessage()
+        ! --------------------
+        ! This funciton is the main waiting loop for the server, it will wait untill it recieves a message from the matlab client and then act on it
+        ! --------------------
+        
+        
         !VAR string received_str;
         VAR string received_str := "FC";
         !VAR num joints{6} := [0,0,0,0,0,0];
@@ -47,60 +54,77 @@ MODULE server
         
         SocketReceive client_socket \Str:=received_str;
         
+        
+        ! Await for a message and then process it once it comes in
         IF StrPart(received_str,1,1) = "F" THEN
             TEST StrPart(received_str,2,1)
-            CASE "C": !status check
-                lastcommand := "C";
-            CASE "D": !set all digital outputs to this
-                lastcommand := "D";
-                batchSetDigitalO(StrPart(received_str, 3, 4));                
-            CASE "T": !toggle individual digital output
-                lastcommand := "D";
-                target := StrToByte(StrPart(received_str, 3, 1));
-                val := StrToByte(StrPart(received_str, 4, 1));
+            CASE "SC": !status check
+                lastcommand := "SC";
+            CASE "DO": !set all digital outputs to this
+                lastcommand := "DO";
+                batchSetDigitalO(StrPart(received_str, 4, 4));                
+            CASE "TO": !toggle individual digital output
+                lastcommand := "TO";
+                target := StrToByte(StrPart(received_str, 4, 1));
+                val := StrToByte(StrPart(received_str, 5, 1));
                 setDigitalIO target, val;
-            CASE "P": !move to specified pose
-                lastcommand := "P";
-                action := "p";
+            CASE "MJ": !move to specified pose
+                lastcommand := "MJ";
+                action := "MJ";
                 joints := [
-                    Decode2Bytes(StrPart(received_str,3,2)),
-                    Decode2Bytes(StrPart(received_str,5,2)),
-                    Decode2Bytes(StrPart(received_str,7,2)),
-                    Decode2Bytes(StrPart(received_str,9,2)),
-                    Decode2Bytes(StrPart(received_str,11,2)),
-                    Decode2Bytes(StrPart(received_str,13,2))];
+                    Decode2Bytes(StrPart(received_str,4,2)),
+                    Decode2Bytes(StrPart(received_str,6,2)),
+                    Decode2Bytes(StrPart(received_str,8,2)),
+                    Decode2Bytes(StrPart(received_str,10,2)),
+                    Decode2Bytes(StrPart(received_str,12,2)),
+                    Decode2Bytes(StrPart(received_str,14,2))];
                     
-            CASE "J": !jog joint
-                lastcommand := "J";
+            CASE "JJ": !jog joint
+                lastcommand := "JJ";
+                action := "JJ";
                 joggingjoints := [
-                    Decode2Bytes(StrPart(received_str,3,2)),
-                    Decode2Bytes(StrPart(received_str,5,2)),
-                    Decode2Bytes(StrPart(received_str,7,2)),
-                    Decode2Bytes(StrPart(received_str,9,2)),
-                    Decode2Bytes(StrPart(received_str,11,2)),
-                    Decode2Bytes(StrPart(received_str,13,2))];
+                    Decode2Bytes(StrPart(received_str,4,2)),
+                    Decode2Bytes(StrPart(received_str,6,2)),
+                    Decode2Bytes(StrPart(received_str,8,2)),
+                    Decode2Bytes(StrPart(received_str,10,2)),
+                    Decode2Bytes(StrPart(received_str,12,2)),
+                    Decode2Bytes(StrPart(received_str,14,2))];
 
                 
-            CASE "L": !jog linear 
-                lastcommand := "L";
+            CASE "JL": !jog linear 
+                lastcommand := "JL";
+                action := "JL";
                 jogdir := [
-                    StrToByte(StrPart(received_str,3,2)),
-                    StrToByte(StrPart(received_str,5,2)),
-                    StrToByte(StrPart(received_str,7,2))
+                    StrToByte(StrPart(received_str,4,2)),
+                    StrToByte(StrPart(received_str,6,2)),
+                    StrToByte(StrPart(received_str,8,2))
                 
                 ];
-            CASE "A": !pause jogging (arrette)
-                lastcommand := "A";
+            CASE "PA": !pause jogging (arrette)
+                lastcommand := "PA";
+                action := "PA";
                 StorePath;
                 StopMove;
-            CASE "R": !resume jogging 
-                lastcommand := "R";
+            CASE "RE": !resume jogging 
+                lastcommand := "RE";
+                action := "RE";
                 RestoPath;
                 StartMove;
-            CASE "H": !
-                lastcommand := "H";
+            CASE "ST": !
+                lastcommand := "ST";
+                action := "ST";
                 StopMove;
                 ClearPath;
+            CASE "MC": !Move to conveyor pos
+                lastcommand := "MC";
+                action := "MC";
+                target_pos := Offs(pConvHome, Decode2Bytes(StrPart(received_str,4,2)), Decode2Bytes(StrPart(received_str,6,2)), Decode2Bytes(StrPart(received_str,8,2)));
+                target_pos.rot := OrientZYX(Decode2Bytes(StrPart(received_str,10,2)),Decode2Bytes(StrPart(received_str,12,2)),Decode2Bytes(StrPart(received_str,14,2)));
+            CASE "MT": !Move to table pos 
+                lastcommand := "MT";
+                action := "MT";
+                target_pos := Offs(pTableHome, Decode2Bytes(StrPart(received_str,4,2)), Decode2Bytes(StrPart(received_str,6,2)), Decode2Bytes(StrPart(received_str,8,2)));
+                target_pos.rot := OrientZYX(Decode2Bytes(StrPart(received_str,10,2)),Decode2Bytes(StrPart(received_str,12,2)),Decode2Bytes(StrPart(received_str,14,2)));
             DEFAULT:
             ENDTEST
         ENDIF
@@ -112,9 +136,25 @@ MODULE server
             
         ! Send the string back to the client, adding a line feed character.
         SocketSend client_socket \Str:=GetRobStatus(lastcommand);
+        
+        ERROR
+        IF ERRNO = ERR_SOCK_CLOSED THEN
+            SocketClose client_socket;
+            ListenForAndAcceptConnection;
+            RETRY;
+        ELSEIF ERRNO = ERR_SOCK_TIMEOUT THEN
+            SocketClose client_socket;
+            ListenForAndAcceptConnection;
+            RETRY;
+        ENDIF
     ENDPROC
     
     FUNC string GetRobStatus(string lastcommand)
+        ! ------------------
+        ! This function expects the last command that was sent to the robot and returns a string representation of the robots status,
+        ! ready to be sent back to the matlab client
+        
+        
         VAR string output := "B";
         VAR jointtarget jointsout;
         VAR string temp := "";
@@ -151,6 +191,8 @@ MODULE server
     ENDFUNC
     
     PROC batchSetDigitalO(string target)
+        ! -----------
+        ! This function takes in a 4 long binary string, breaks it down for each digital io value and then uses another function to set it
         setDigitalIO 1, StrToByte(Strpart(target,1,1));
         setDigitalIO 2, StrToByte(Strpart(target,2,1));
         setDigitalIO 3, StrToByte(Strpart(target,3,1));
@@ -160,6 +202,7 @@ MODULE server
     
     
     PROC setDigitalIO(num target, num value)
+        ! this function takes in a target io suffic and a value and then sets the digital output with the target suffix with the given value
         TEST target
         CASE 1:
             DO10_1 := value;
@@ -174,6 +217,7 @@ MODULE server
     
     
     FUNC num Decode2Bytes(string chars)
+        ! this function takes in a string of length 2 and then returns its CHAR representation of that string
         VAR byte data_buffer{5};
         VAR string big := "";
         
@@ -192,6 +236,7 @@ MODULE server
     ENDFUNC
     
     FUNC string Encode2String(num in)
+        ! this function takes in a numerical value 0-65535 and then returns a 2 byte charstring that represents that value
         VAR string out;
         VAR string a;
         VAR string b;
@@ -207,6 +252,7 @@ MODULE server
     ENDFUNC
     
     PROC ListenForAndAcceptConnection()
+        !this function is used to (re)connect to a socket
         
         ! Create the socket to listen for a connection on.
         VAR socketdev welcome_socket;
