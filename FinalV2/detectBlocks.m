@@ -1,244 +1,297 @@
-function out = detectBlocks(rgb)
-    blockSize = 54;
-
-    % Erase the background
-    rgb(1:220, :, :) = 80;
+% An example of how your function will be called, and what it should
+% output.
+% image_file_path is the absolute path to the image that you should
+% process. This should be used to read in the file.
+% image_file_name is just the name of the image. This should be written to
+% the output file.
+% output_file_path is the absolute path to the file where you should output
+% the name of the file as well as the blocks that you have detected.
+% program_folder is the folder that your function is running in.
+% Your block detection.
+function out = detectBlocks(img)
     
-    %find the properties of hte blocks
-    [centroids, colors, shapeM, img] = findBlocks(rgb);
-    angBlock = detectOrientation(centroids, img, blockSize);
-    [shapes, letters, angBlock] = detectSymbol(centroids, angBlock, colors, shapeM, blockSize);
 
-    % Fix the letter angles if they're out of range 180 to -180
-    angBlock = wrapAngles(angBlock);
+    [colourCNN, letterCNN, shapeCNN, binLetterCNN] = importCNNs();
 
-    % Reachability
-    reachable = isReachable(centroids);
-    out = sortrows([centroids, angBlock, colors, shapes, letters, reachable]);
+    % find centroids
+    [centroidL, areaBoxL, orientationL, maskedLImg, letterType] = detectLetterBlocks(img);
+    [centroidS, areaBoxS, orientationS, maskedSImg, shapeType] = detectShapeBlocks(img);
+
+    %debugging NOT IN USE
+    types = [letterType; shapeType];
+    bounds = [areaBoxL; areaBoxS];
+
+    % make sure their going left to right
+    centroids = sortrows([[centroidL; centroidS] types], 1,'ascend');
+
+    oor = find(centroids(:,2) < 220);
+    centroids(oor,:) = [];
+
+    types = centroids(:, 3);
+    centroids = centroids(:, 1:2);
+    out = [];
+
+    for i = 1:size(centroids(:,1))
+        %angle finding
+        block = isolateBlock(centroids(i,:), img);
+
+        angle = blockAngle(block, centroids(i,:));
+               
+        %block classification
+        try
+        colour = str2double(classifyColour(colourCNN, block));
+        catch
+            colour = 0;
+        end
+
+        if ((colour ~= 0) && (types(i) == 1)) % if its a colour block
+            try
+            shape = str2double(classifyShape(shapeCNN, block));
+            catch
+            shape = 1;
+            end
+            
+            letter = 0;
+
+        else %it's a letter
+            colour = 0;
+            shape = 0;
+            
+            try
+            letter = str2double(classifyLetter(letterCNN, block));
+            catch
+            letter = 'A';
+            end
+        end
+
+        %reachability
+        reachable = isReachable(centroids(i,:));
+
+        blockOut = [centroids(i,1) centroids(i,2) angle ...
+                  colour shape letter reachable];
+        out = [out; blockOut];
+
+
+        %alph(binLetter)
+    end
+
+end
+
+
+% This is an example of how to write the results to file.
+% This will only work if you store your blocks exactly as above.
+% Please ensure that you output your detected blocks correctly. A
+% script will be made available so that you can run the comparison
+% yourselves, to test that it is working.
+
+%------------------------ BLOCK FEATURE EXTRACT ----------------------
+
+function block = isolateBlock(centroid, img)
+    % crops a block from the image and returns: 
+    % 77x77x3 picture of block and surroundings
+
+
+    cropBound = [centroid(1) - 38, centroid(2) - 38, ...
+                        76       ,          76     ];
     
+    block = imcrop(img, cropBound);
+    
+    try
+    if ~isequal(size(block), [77 77 3])
+        block = imresize(block, [77 77]);
+    end
+    catch  
+    end
+    
+end
+
+function angle = blockAngle(block, centroid)
+    % finds the orientation of a block
+
+    binaryBlockImg = binaryLOutlineMask(block);
+    
+    binaryEdge = edge(binaryBlockImg, 'canny');
+    [outX,outY] = find(binaryEdge == 1);
+    
+    block(:,:,:) = 0;
+    
+    for i = 1:size(outX,1)
+        block(outX(i),outY(i), 1)  = 0;
+        block(outX(i),outY(i), 2)  = 0;
+        block(outX(i),outY(i), 3)  = 255;
+    end
+    
+    block = rgb2gray(block);
+    block = imbinarize(block);
+
+    [H, T, R] = hough(block);
+    peaks = houghpeaks(H, 5);
+    lines = houghlines(block, T, R, peaks, 'MinLength', 15);
+    
+    bestD = Inf;
+    
+    for i = 1:size(lines, 2) %for each line
+        
+        % PERPINDICULAR DISTANCE FINDING
+        % find the equation of the line
+        x = [lines(i).point1(1) lines(i).point2(1)];
+        y = [lines(i).point1(2) lines(i).point2(2)];
+        
+        X = 38;
+        Y = 38;
+        
+        if (x(1) ~= x(2))
+            c = [[1; 1]  x(:)]\y(:);
+            m = c(2);
+            b = c(1);
+
+            A = m;
+            B = -1;
+            C = b;
+
+            ad = (abs(A*X + B*Y + C))/sqrt(A*A + B*B);
+        else
+            ad = abs(X-x(2));
+        end
+        
+        if (abs(23 - ad) < abs(23 - bestD))
+            bestD = ad;
+            bestInd = i;
+            angle = lines(bestInd).theta;
+        end
+               
+        %wrap to 45 degrees
+        if angle > 45 
+           angle = angle - 90;
+        elseif angle < -45
+           angle = angle + 90; 
+        end
+        
+%         %plot
+%         figure(2), imshow(block), hold on
+%  
+%         xy = [lines(i).point1; lines(i).point2];
+%         plot(xy(:,1),xy(:,2), 'LineWidth', 2,'Color','green');
+%          
+%         plot(xy(1,1),xy(1,2), 'LineWidth', 2,'Color','yellow');
+%         plot(xy(2,1),xy(2,2), 'LineWidth', 2,'Color','red');
+%        
+    end
+
+    angle = angle * pi/180;
+    
+end
+
+function reachable = isReachable(centroid)
+    origin = [805, 26];
+    reach = 832.4;
+        
+    if hypot(centroid(1) - origin(1), centroid(2) - origin(2)) < reach;
+        reachable = 1;
+    else
+        reachable = 0;
+    end
 end
 
 %-------------------------BLOCK DETECTION ------------------------
-function [centroids, colors, shapeMasks, img] = findBlocks(rgb)
+
+function [centroids, areaBox, orientation, maskedImg, type] = detectLetterBlocks(img)
     %this function will: find the block centroid
     %                    segment the block 
     %                    return single blocks for NN
-    
-    hsv = rgb2hsv(rgb);
-    xyz = rgb2xyz(rgb);
+    % NOTE ITS ONLY FOR LETTER BLOCKS
 
-    % array of filter anonymous functions  -> for later
-    filters = {2, @orangeM, 300, 1749, 55;
-        3, @yellowM, 300, 1749, 55;
-        4, @greenM, 300, 1749, 55;
-        5, @blueM, 300, 1749, 55;
-        6, @purpM, 300, 1749, 55;
-        1, @redM, 300, 1749, 55;
-        0, @whiteM, 150, 1199, 45};
 
-    canvas = true(1200, 1600);
-    numFilt = size(filters, 1);
-    masks = false(numFilt, 1200, 1600);
-    shapeMasks = false(numFilt, 1200, 1600);
-    blocks = double.empty(0, 4);
-    
-    for i = 1:numFilt
-        % see what blocks each filter detects, compile them together and
-        % remove all the random ass shit
-        maskFunctions = filters{i, 2};
-        masks(i, :, :) = canvas & maskFunctions(hsv, xyz);
-        shapeMasks(i, :, :) = bwareafilt(squeeze(masks(i, :, :)), [filters{i, 3}, filters{i, 4}]) & bwpropfilt(squeeze(masks(i, :, :)), 'MajorAxisLength', [0, filters{i, 5}]);
-        canvas = canvas & ~imdilate(squeeze(shapeMasks(i, :, :)), strel('disk', 3, 4));
-        regions = regionprops('table', squeeze(shapeMasks(i, :, :)), 'Centroid');
-        numRegions = size(regions, 1);
-        if size(regions, 1) > 0
-            newBlock = [table2array(regions(:, 1)), repmat(filters{i, 1}, numRegions, 1), vecnorm(table2array(regions(:, 1)) - [800, 600], 2, 2)];
-            blocks = [blocks; newBlock];
-        end
-    end
+%convert into relevant colour spaces
+    imgRGB =  img;
 
-    blocks = sortrows(blocks, 4, 'descend');
-    
-   % remove all the random ass shit (dots from the grid)
-    img = ~(canvas & squeeze(masks(7, :, :)));
-    img = imclose(img, strel('disk', 5, 4));
-    img = imopen(img, strel('disk', 5, 4));
-
-    centroids = blocks(:, 1:2);
-    colors = blocks(:, 3);
-end
-
-function block = isolateBlock(img, centroid, rot, blockSize)
-    %cut an area around the block
-    
-    winSize = blockSize * sqrt(2);
-    img = padarray(img, ceil([winSize / 2, winSize / 2]));
-    
-    
-    rotated = imrotate(imcrop(img, [centroid, winSize, winSize]), rot);
-    
-    offCut = (size(rotated) - blockSize) / 2;
-    block = imcrop(rotated, [offCut(1:2), blockSize, blockSize]);
-    
-end
-
-%------------------------ BLOCK FEATURE EXTRACT ----------------------
-function orient = detectOrientation(centroids, blocksArea, blockSize)
-    %find the orientation of a block
-    orient = zeros(size(centroids, 1), 1);
-    
-
-    for i = 1:size(centroids, 1)
-        %try 3 orient and narrow it down slowly until the one with the
-        %most non zero (i.e. most block) is found, and keep that one
+    %first detect the blocks and their properties themselves
+%   This is done by binarizing/filtering the image
+     binaryBlockImg = binaryLBlockMask(imgRGB);
         
-        % if its a square it hsould theoretically fit the whole
-        %thing we crop out
-        
-        pass1 = 30;
-        
-        anonFunc = @(x) nnz(isolateBlock(blocksArea, centroids(i, :), x, blockSize));
-        angles = [-pass1 0 pass1];
-        [~, index] = max(arrayfun(anonFunc, angles));
-        
-        angles = angles(index) - 10:10:angles(index) + 10;
-        [~, index] = max(arrayfun(anonFunc, angles));
-        
-        angles = angles(index) - 3:3:angles(index) + 3;
-        [~, index] = max(arrayfun(anonFunc, angles));
-        
-        angles = angles(index) - 1:1:angles(index) + 1;
-        [~, index] = max(arrayfun(anonFunc, angles));
-        
-        
-        orient(i) = angles(index);
-       
-        %create a square that is perfectly sized, and rotate using orientation the
-        %found
-        squareMask = true(blockSize, blockSize);
-        squareMask = imrotate(squareMask, -orient(i));
-        sizeMask = size(squareMask);
-        
-        mask = false(size(blocksArea));
-        mask(1:sizeMask(1), 1:sizeMask(2)) = squareMask;
-        mask = imtranslate(mask, centroids(i, :) - sizeMask / 2);
-        
-        %add to the canvas
-        blocksArea = blocksArea & ~mask;
-    end
-end
+    %binaryBlockImg = GaussianFilter(binaryBlockImg, 3, 5); %gaussian fulters
+    binaryBlockImg = bwareaopen(binaryBlockImg, 50);
+    binaryBlockImg = imerode(~binaryBlockImg, ones(4));
+    binaryBlockImg = imdilate(binaryBlockImg, ones(5));
+    binaryBlockImg = ~binaryBlockImg;
+    %bwfilt to keep things in a range
+    maskedImg = binaryBlockImg;
 
-function [shapes, letters, orientOut] = detectSymbol(centroids, orient, colors, shapeM, blockSize)
-    % finds whatever is on the block
+
+    %find the properties of the qwirkle blocks
+    blocks = regionprops(binaryBlockImg, 'Area', 'BoundingBox', ...
+                         'Centroid', 'Image', 'Orientation');
+    centroids = [];
+    areas = [];
+    areaBox = [];
+    orientation = [];
+    type = [];
     
-    shapes = zeros(size(centroids, 1), 1);
-    letters = zeros(size(centroids, 1), 1);
-    angles = zeros(size(centroids, 1), 1);
-
-    colorMaskArr = [7, 6, 1, 2, 3, 4, 5];
-
-    masks = shapeM(colorMaskArr(colors + 1), :, :);
-
-    shalf = sqrt(1/2);
-    sthreeq = sqrt(3/4);
-    
-    shapeT = [shalf, sthreeq, 1,   sthreeq, shalf, sthreeq, 1, sthreeq;         %square
-                       1,     sthreeq, shalf, sthreeq, 1, sthreeq, shalf, sthreeq;       
-                       1, 1, 1, 1, 1, 1, 1, 1;                                           
-                       1, sthreeq, 1/2, sthreeq, 1, sthreeq, 1/2, sthreeq;
-                       1/2, sthreeq, 1, sthreeq, 1/2, sthreeq, 1, sthreeq;
-                       1, 3/4, 1, 3/4, 1, 3/4, 1, 3/4];
-
-    coords = createShapeAutis();
-
-    for i = 1:size(centroids, 1)
-        if (colors(i) ~= 0) % if its a colour block
-            shapes(i) = detectShape(isolateBlock(squeeze(masks(i, :, :)), ...
-                                    centroids(i, :), orient(i), blockSize), shapeT, coords);
-        else %it's a letter
-            [letters(i), angles(i)] = detectLetter(isolateBlock(squeeze(masks(i, :, :)), ....
-                                      centroids(i, :), orient(i), blockSize - 10));
+    for i = 1:size(blocks,1)
+        if (blocks(i).Area < 800 && blocks(i).Area > 100)  
+            centroids = [centroids; blocks(i,:).Centroid];
+            areas = [areas blocks(i).Area];
+            areaBox = [areaBox; blocks(i).BoundingBox];
+            orientation = [orientation blocks(i).Orientation]; 
+            type = [type; 0]; %letter
         end
     end
     
-    orientOut = orient + angles;
+%     figure(10)
+%     imshow(binaryBlockImg)
+        
 end
 
-function [letter, angle] = detectLetter(blockImg)
-    % USE OCR - to determine which orientation has the best confidence, and
-    % use that to determine the final rotation.
-    % rotates in 90 degree angles
+function [centroids, areaBox, orientation, maskedImg, type] = detectShapeBlocks(img)
+        %this function will: find the block centroid
+    %                    segment the block 
+    %                    return single blocks for NN
+    % NOTE ITS ONLY FOR LETTER BLOCKS
+
+
+%convert into relevant colour spaces
+    imgRGB =  img;
     
-    % Also finds the best letter
-    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    letter = 'A';
-    angle = 0;
-    bestConf = 0;
+%first detect the blocks and their properties themselves
+%   This is done by binarizing/filtering the image
+     RBYOBlockImg = binaryRBYOBlockMask(imgRGB);
+     GPBlockImg = binaryGPBlockMask(imgRGB);
+     GBlockImg = binaryGBlockMask(imgRGB);
+     
+     %OR all the filteres together to get all the shapes (hopefully)
+     binaryBlockImg = RBYOBlockImg | GPBlockImg | GBlockImg;
+
+    %binaryBlockImg = GaussianFilter(binaryBlockImg, 3, 5); %gaussian fulters
+    binaryBlockImg = bwareaopen(binaryBlockImg, 50);
+    binaryBlockImg = imerode(~binaryBlockImg, ones(4));
+    binaryBlockImg = imdilate(binaryBlockImg, ones(5));
+    binaryBlockImg = ~binaryBlockImg;
+
+    maskedImg = binaryBlockImg;
+      
+    %find the properties of the qwirkle blocks
+    blocks = regionprops(binaryBlockImg, 'Area', 'BoundingBox', ...
+                         'Centroid', 'Image', 'Orientation');
+    centroids = [];
+    areas = [];
+    areaBox = [];
+    orientation = [];
+    type = [];
     
-    for rot = 0:90:270
-        ocrDetails = ocr(blockImg, 'TextLayout', 'Word', 'CharacterSet', alphabet);
-        [conf, ind] = max(ocrDetails.CharacterConfidences);
-        if conf > bestConf
-            letter = ocrDetails.Text(ind);
-            angle = rot;
-            bestConf = conf;
+    for i = 1:size(blocks,1)
+        if (blocks(i).Area < 2000 && blocks(i).Area > 300)  
+            centroids = [centroids; blocks(i,:).Centroid];
+            areas = [areas blocks(i).Area];
+            areaBox = [areaBox; blocks(i).BoundingBox];
+            orientation = [orientation blocks(i).Orientation];
+            type = [type; 1];
         end
-        blockImg = rot90(blockImg);
     end
-
-    letter = double(letter) - double('A') + 1;
-end
-
-function [shape] = detectShape(blockImg, shapeTemp, coord)
-    crossSect = cellfun(@(x) sum(improfile(bwareafilt(blockImg, 1), x(1:2), x(3:4), 50)), coord)';
-    shape = knnsearch(shapeTemp, crossSect / max(crossSect));
-end
-
-function reachable = isReachable(centroids)
-    origin = [805, 26];
-    reach = 832.4;
     
-    reachable = vecnorm(centroids - origin, 2, 2) < reach;
-end
-
-function angBlock = wrapAngles(angBlock)
-    angBlock(angBlock >= 180) = angBlock(angBlock >= 180) - 360;
-    angBlock(angBlock < -180) = angBlock(angBlock < -180) + 360;
-    angBlock = deg2rad(angBlock);
-end
-
-%--------------------------- NEURAL NETWORK ----------------------------------
-
-function [colourCNN, letterCNN, shapeCNN] = importCNNs()
-
-    colourCNN = load('colourCNN.mat', 'colourCNN');
-    colourCNN = colourCNN.colourCNN;
+    %debugging - plot the centroids
+%     figure(11)
+%     imshow(binaryBlockImg)
     
-    letterCNN = load('letterCNNBin.mat', 'letterCNN');
-    letterCNN = letterCNN.letterCNN;
-    
-    shapeCNN = load('shapesCNN.mat', 'shapeCNN');
-    shapeCNN = shapeCNN.shapeCNN;
-    
-end
-
-function colour = classifyColour(CNN, block)
-    colour = classify(CNN, block);
-    colour = string(colour);
-    colour = regexp(colour, '\d\d?', 'match');
-end
-
-function shape = classifyShape(CNN, block)
-    shape = classify(CNN, block);
-    shape = string(shape);
-    shape = regexp(shape, '\d\d?', 'match');
-end
-
-function letter = classifyLetter(CNN, block)
-    letter = classify(CNN, block);
-    letter = string(letter);
-    letter = regexp(letter, '\d\d?', 'match');
-
 end
 
 % ------------------------- IMAGE MASKS -------------------------------
@@ -448,113 +501,46 @@ maskedRGBImage(repmat(~BW,[1 1 3])) = 0;
 
 end
 
-% ------------------------ HELPER FUNCTIONS -------------------------------
 
-function x = vecnorm(x,dim,p)
-%VECNORM    Returns vector norms
-%
-%    Usage:    m=vecnorm(x)
-%              m=vecnorm(x,dim)
-%              m=vecnorm(x,dim,p)
-%
-%    Description:
-%     M=VECNORM(X) returns the vector L2 norms for X down its first
-%     non-singleton dimension.  This means that for vectors, VECNORM and
-%     NORM behave equivalently.  For 2D matrices, VECNORM returns the
-%     vector norms of each column of X.  For ND matrices, M has equal
-%     dimensions to X except for the first non-singleton dimension of X
-%     which is size 1 (singleton).  So for X with size 3x3x3, M will be
-%     1x3x3 and corresponds to norms taken across the rows of X so
-%     M(1,2,2) would give the norm for elements X(:,2,2).
-%
-%     M=VECNORM(X,DIM) returns the vector L2 norms for matrix X across
-%     dimension DIM.
-%
-%     M=VECNORM(X,DIM,P) specifies the norm length P.  The default is 2.
-%
-%    Notes:
-%     - Note that NORM is an internal function so it is significantly
-%       faster than VECNORM (basically if you can, use NORM).
-%
-%    Examples:
-%     % Show the L2 norms of each row and column for a matrix:
-%     vecnorm(magic(5),1)
-%     vecnorm(magic(5),2)
-%
-%    See also: NORM
+% ------------------------ NEURAL NET -------------------------------
+function [colourCNN, letterCNN, shapeCNN, binLetterCNN] = importCNNs()
 
-%     Version History:
-%        Nov. 12, 2009 - initial version
-%        Feb. 10, 2012 - doc update
-%
-%     Written by Garrett Euler (ggeuler at wustl dot edu)
-%     Last Updated Feb. 10, 2012 at 05:45 GMT
-
-% todo:
-
-% default dimension
-if(nargin==1 || isempty(dim))
-    dim=find(size(x)~=1,1);
-    if(isempty(dim)); dim=1; end
-end
-
-% check dimension
-if(~isscalar(dim) || dim~=fix(dim))
-    error('seizmo:vecnorm:badDim','DIM must be a scalar integer!');
-end
-
-% default norm length
-if(nargin<3 || isempty(p)); p=2; end
-
-% check norm length
-if(~isscalar(p) || ~isreal(p))
-    error('seizmo:vecnorm:badP','P must be a scalar real!');
-end
-
-% get norm
-if(p==inf)
-    x=max(abs(x),[],dim);
-elseif(p==-inf)
-    x=min(abs(x),[],dim);
-else
-    x=sum(abs(x).^p,dim).^(1/p);
-end
-
-end
-
-function autis = createShapeAutis()
-    c = 27;
-    r = 24;
+    colourCNN = load('colourCNN.mat', 'colourCNN');
+    colourCNN = colourCNN.colourCNN;
     
-    a = (0:pi/8:7*pi/8)';
-    autis = num2cell([c + r*cos(a), c - r*cos(a), c + r*sin(a), c - r*sin(a)], 2);
+    letterCNN = load('letterCNNRGB.mat', 'letterCNN');
+    letterCNN = letterCNN.letterCNN;
+    
+    binLetterCNN = load('letterCNNBin.mat', 'letterCNN');
+    binLetterCNN = binLetterCNN.letterCNN;
+    
+    shapeCNN = load('shapeCNN.mat', 'shapeCNN');
+    shapeCNN = shapeCNN.shapeCNN;
+    
 end
 
-%--------------------------- IMAGE MASKS ----------------------------------
-function white = whiteM(~, xyz)
-    white = imclose(bwareaopen(xyz(:, :, 1) >= 0.281233, 10), strel('disk', 2, 4));
+function colour = classifyColour(CNN, block)
+    colour = classify(CNN, block);
+    colour = string(colour);
+    colour = regexp(colour, '\d\d?', 'match');
 end
 
-function orange = orangeM(hsv, ~)
-    orange = hsv(:, :, 1) < 1/12 & hsv(:, :, 2) >= 1/5 & hsv(:, :, 3) >= 1/4;
+function shape = classifyShape(CNN, block)
+    shape = classify(CNN, block);
+    shape = string(shape);
+    shape = regexp(shape, '\d\d?', 'match');
 end
 
-function yellow = yellowM(hsv, ~)
-    yellow = hsv(:, :, 1) >= 1/12 & hsv(:, :, 1) < 5/24 & hsv(:, :, 2) >= 1/2 & hsv(:, :, 3) >= 1/2;
+function letter = classifyLetter(CNN, block)
+    letter = classify(CNN, block);
+    letter = string(letter);
+    letter = regexp(letter, '\d\d?', 'match');
+
 end
 
-function green = greenM(hsv, ~)
-    green = hsv(:, :, 1) >= 5/24 & hsv(:, :, 1) < 1/2 & hsv(:, :, 2) >= 1/12 & hsv(:, :, 3) >= 1/8;
-end
+function letter = classifyBLetter(CNN, block)
+    letter = classify(CNN, block);
+    letter = string(letter);
+    letter = regexp(letter, '\d\d?', 'match');
 
-function blue = blueM(hsv, ~)
-    blue = hsv(:, :, 1) >= 1/2 & hsv(:, :, 1) < 2/3 & hsv(:, :, 2) >= 1/8 & hsv(:, :, 3) >= 1/8;
-end
-
-function purple = purpM(hsv, ~)
-    purple = hsv(:, :, 1) >= 2/3 & hsv(:, :, 1) < 5/6 & hsv(:, :, 2) >= 1/8 & hsv(:, :, 3) >= 1/8;
-end
-
-function red = redM(hsv, ~)
-    red = (hsv(:, :, 1) >= 11/12 | hsv(:, :, 1) < 1/24) & hsv(:, :, 2) >= 1/5 & hsv(:, :, 3) >= 1/4;
 end
