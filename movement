@@ -4,28 +4,33 @@ MODULE movement
     PERS speeddata speed;
     PERS num jogdir{3};
     PERS num joggingjoints{6};
+    PERS robtarget target_pos;
     PROC Main()
         WHILE TRUE DO
-            !here we actually move the robot
+            ! Continuously see what is required to be done, if the server sets an action then perform that action.
             TEST action
-            CASE "P":
+            CASE "MJ":
                 MoveAbsJ [joints,[9e9,9e9,9e9,9e9,9e9,9e9]], speed, fine, tSCup;
-            CASE "L":
+            CASE "JL":
                 joglinear;
-            CASE "J":
+            CASE "JJ":
                 jogjoint;
-            CASE "A":
+            CASE "PA":
                 StorePath;
                 StopMove;
-            CASE "R":
+            CASE "RE":
                 RestoPath;
                 StartMove;
-            CASE "H":
+            CASE "ST":
                 StopMove;
                 ClearPath;
                 joggingjoints := [0,0,0,0,0,0];
                 joints := [0,0,0,0,0,0];
-            IF action <> "L" AND action <> "J" THEN
+            CASE "MC":
+                MoveL target_pos, speed, fine, tSCup;
+            CASE "MT":
+                MoveL target_pos, speed, fine, tSCup;
+            IF action <> "L" AND action <> "J" AND action <> "A" THEN
                 action := "";
             ENDIF
             ENDTEST
@@ -33,12 +38,16 @@ MODULE movement
     ENDPROC
     
     PROC joglinear()
+        ! this function reads in persistent variables and then sets the robot target to be slightly further away in the requested direction
+        ! than the current target
         var robtarget curr_target;
         curr_target := CRobT(\Tool:=tSCup);
         MoveL Offs(curr_target, jogdir{1}*100, jogdir{2}*100, jogdir{3}*100), speed, fine, tSCup;
     ENDPROC
 
     PROC jogjoint()
+        !this function reads in persistent variables and then sets the robot target to be slightly further away in the requested angles
+        ! than the current target
         VAR jointtarget jointsout;
         jointsout := CJointT();
         jointsout.robax.rax_1 := jointsout.robax.rax_1 + joggingjoints{1};
