@@ -1,1 +1,1 @@
-## Communication Fucntions
+## Communication Functions
