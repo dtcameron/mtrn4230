@@ -1,0 +1,44 @@
+
+---------------------
+
+Comms:
+	Safeties - 9
+
+	Status - RobotMoving
+
+
+---------------------------------------
+
+    delimiter character = '|'
+
+    %message strcut:
+    %    head - 1 byte, 'B'
+    %    status - PrevCommand RobotBusy  [x bytes]
+    %    safety  - 9 bytes
+    %    DIO - 4 bytes
+    %    joints - 12 bytes
+    %    EE - 12 bytes
+
+example message to send back
+    TO MATLAB: B| 	1           SC                     |000011111|1111|AFFFFFFFFFFFFFFF|1352 0645 0015|
+		     RobotBusy   PrevCommand  CurrCommand	  	                      X    Y    Z
+
+-----------------------------------------
+example messages that you'll recieve
+     Status Check: F|SC
+
+     Toggle DIO:   F|TD|4
+		   F|SD|0000
+
+
+
+ROBOT STUDIO - TO DO
+--------------------------------------
+Add delimited message processing
+Add delimited message sending
+
+find out why the message isnt process on RS side
+
+Safeties - 9
+Status - RobotMoving
+

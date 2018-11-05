@@ -67,13 +67,10 @@ function [socket, connectType] = startConnectionToRobot()
 %         data = fgetl(socket);     %recieve reply
 %         fprintf(char(data));     % Print confirmation
 %         %------------------------------------------------------------------
-%         %Set the status bits for intialization!!!!
-%         %Set hte confirmation bit and see if it comes back okay
-%         initConfMsg = toggleStatus('Confirmation');
-%         fwrite(socket, initConfMsg);
-% 
-%         initConfMsg = toggleStatus('Connected');
-%         fwrite(socket, initConfMsg);
+% %         fwrite(socket, initConfMsg);
+% % 
+% %         initConfMsg = toggleStatus('Connected');
+% %         fwrite(socket, initConfMsg);
 %                 
 %     end
     
@@ -85,7 +82,8 @@ end
 function socket = connectAttempt(address, port)
 
     socket = tcpip(address, port);
-    set(socket, 'Timeout', 1);
+    set(socket, 'ReadAsyncMode', 'continuous');
+    set(socket, 'Timeout', 2);
     
     try
         disp(['Opening a TCP connection to ', address, ' on port ', num2str(port)]);

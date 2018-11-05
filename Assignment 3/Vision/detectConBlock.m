@@ -1,16 +1,16 @@
 function out = detectConBlock(img)
-% detectBlock:
-% INPUT: img is n by n by 3 RGB image which has qwirkle blocks and letters to
-%        identify
-% OUTPUT: out is a numBlocks x 5 array containing
-%           block centroid X (pixel coord)
-%           block centroid Y (pixel coord)
-%           block orientation (from -pi/4 to pi/4)
-%           block type (0 is letter, 1 is shape block)
-%           block reachable status (0 is unreachable, 1 is in range)
-    img(700:end, :) = 0;
-    img(:, 1:520,:) = 0;
-    img(:, 1220:end ,:) = 0;
+%   function detectBlock:
+%       INPUT: img is n by n by 3 RGB image which has qwirkle blocks and letters to
+%              identify
+%       OUTPUT: out is a numBlocks x 5 array containing
+%              block centroid X (pixel coord)
+%              block centroid Y (pixel coord)
+%              block orientation (from -pi/4 to pi/4)
+%              block type (0 is letter, 1 is shape block)
+%              block reachable status (0 is unreachable, 1 is in range)
+    conImg(700:end, :) = 0;
+    conImg(:, 1:600,:) = 0;
+    conImg(:, 1160:end ,:) = 0;
 
     % find centroids
     [centroidL, maskedLImg, letterType] = detectLetterBlocks(img);
