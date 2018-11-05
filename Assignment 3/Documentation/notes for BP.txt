@@ -1,0 +1,6 @@
+grid designation: need to find all the centres of grid spaces
+		  finding centroids in
+		  fixing them
+	          make sure there isnt two blocks in the same square
+
+vision: write the axes plot functions
