@@ -22,13 +22,15 @@ function processConImages(conImg, ConVidPlot, ConVidAxes)
     peaks = houghpeaks(H, 4);
     lines = houghlines(edgey, T, R, peaks, 'MinLength', 20);
     angle = lines(2).theta;
-    
     for i = 1:size(lines,2)
+        if i == 5
+            break
+        end
         xy = [lines(i).point1; lines(i).point2];
-        set(ConVidPlot, 'xdata', xy(:,1), 'ydata', xy(:,2), 'LineWidth', 2, 'Color', 'green');
+        set(ConVidPlot(i), 'xdata', xy(:,1), 'ydata', xy(:,2), 'LineWidth', 2, 'Color', 'green');
     end
     
-    set(ConVidPlot, 'position', [centroid(1), centroid(2)], 'String', num2str(angle));
+    set(ConVidPlot(5), 'position', [centroid(1), centroid(2)], 'String', num2str(angle));
     
     hold(ConVidAxes, 'off');
     
