@@ -1,4 +1,4 @@
-function [head, status, safety, DIO, joints, EE] = processMessage(x)
+function [busy, eeXYZ, eeOr, joints] = processMessage(x)
 %     [status, safety, DIO, joints] = processMessage(x)
 %     decodes the message coming back from RS
 %     gives a status struct, binary safety and DIO, 1 x 6 joint angle array in radians
@@ -13,13 +13,13 @@ function [head, status, safety, DIO, joints, EE] = processMessage(x)
     %divide up the message
     a = strsplit(x, '|');
                 
-    head = char(a(1));
-    status = char(a(2));
-    safety = char(a(3));
-    DIO = char(a(4));
-    joints = char(a(5));
-    EE = char(a(6));
-            
+%     head = char(a(1));
+    busy = str2double(char(a(2)));
+%     safety = char(a(3));
+%     DIO = char(a(4));
+    eeXYZ = char(3);
+    eeOr = char(a(4));
+    joints = char(a(5));            
     % WILL NEED furtherPROCESSING VIA decodeJoint
 %     joints = decodeJoints(rawJoints);
 %     EEcoord = decodeEE(rawEE);

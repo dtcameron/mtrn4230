@@ -7,13 +7,7 @@ function cmd = createCmdString(cmdType, data)
     %
     % i.e.
     %  Status Check  (SC)
-    %  Status Change (G)
-    %  Set DIO       (D)
-    %
-    %  Set Pose      (P)
-    %  Jog Joint     (J)
-    %  Jog Linear    (L)
-    %  Jog Stop      (S)
+
     
     % Check if it's empty, used to send status if empty
     dataEmptyflag = 0;
@@ -34,5 +28,8 @@ function cmd = createCmdString(cmdType, data)
         cmd = {header, cmdType, data}; 
         cmd = strjoin(cmd,'|');
     end
+    
+    %add a delimiter to the end (before the new line character)
+    cmd = strcat(cmd,'|');
     
 end

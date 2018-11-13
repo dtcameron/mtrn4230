@@ -9,10 +9,10 @@ function response = connectionPopUp()
     % Handle response
     switch answer
         case 'Re-Connect'
-            disp(['Retrying Connections...'])
+            disp('Retrying Connections...')
             response = 1;
         otherwise 
-            disp(['Quitting Program'])
+            disp('Quitting Program')
             response = 0;
     end
 

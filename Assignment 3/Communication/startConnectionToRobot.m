@@ -1,96 +1,47 @@
 function [socket, connectType] = startConnectionToRobot()
-% Will attempt to start a connection to the robot/simulation
-
+% function [socket, connectType] = startConnectionToRobot()
+%       Will attempt to start a connection to the robot/simulation
+%       Open a TCP connection to the robot.
+%       
+%       INPUTS: None
+%
+%       OUTPUTS: 
+%           SOCKET
+%           Is a MATLAB obj of type socket for the further TCPIP
+%           communications
+%
+%           CONNECTTYPE
+%           An indication of the type of connection established, either 0,
+%           1 or 2
+%               1 = Real Robot
+%               0 = RS simulation (fake)
+%               2 = error (no connection established)
 
     % The robot's details:
     % Real Robot     '192.168.125.1'
     % Fake Robot     '127.0.0.1'
     % Port           '1025'
     
-    RSAddress = '192.168.125.1';
+    RSAddress = '192.168.125.1111111111111';
     FakeAddress = '127.0.0.1';
     robotPort = 1025;
     
-    % Connection variables 
-    % Open a TCP connection to the robot.
-    % will check if its a simulation or not
-    % Check if the connection is valid
-    
-    conFlag = 1;
-    conStat = 0;
-    
-    while conFlag && ~conStat 
-        % try connect ot RS
-        socket = connectAttempt(RSAddress, robotPort);
+    % try connect ot RS
+    socket = connectAttempt(RSAddress, robotPort);
+    if(isequal(get(socket, 'Status'), 'open'))
+        connectType = 1;
+    else
+
+    %try connect to simulation RS
+        socket = connectAttempt(FakeAddress, robotPort);
         if(isequal(get(socket, 'Status'), 'open'))
-            connectType = 1;
-            conStat = 1;
+            connectType = 0;
         else
-           
-        %try connect to simulation RS
-            socket = connectAttempt(FakeAddress, robotPort);
-            if(isequal(get(socket, 'Status'), 'open'))
-            % if it connects then
-                connectType = 0;
-                conStat = 1;
-            else
-                disp('No Connecto')
-                
-                try
-                    conFlag = connectionPopUp();
-                catch
-                    disp('connectionPopUp failed');
-                end
-                
-            end
-            
+            connectType = 2;                
         end
-        
-        
-        if conFlag == 0
-           connectType = 2; %error
-        end
-        
-        
+
     end
-        
-    %------------------------------------------------------------------
-    % Confirmation of robot stuff
-    %   Should probably set the robot's status bits here
-    %       Set Connected
-    %       Set Confirmation
-    %-------------------------------------------------------------------
-%     if (connectType ~= 2)
-%         
-%         fwrite(socket, [datestr(datetime('now'),'mmm-dd HH:MM:SS') ... 
-%                        '. Henlo Robot!.\n']);     %send message
-%         data = fgetl(socket);     %recieve reply
-%         fprintf(char(data));     % Print confirmation
-%         %------------------------------------------------------------------
-% %         fwrite(socket, initConfMsg);
-% % 
-% %         initConfMsg = toggleStatus('Connected');
-% %         fwrite(socket, initConfMsg);
-%                 
-%     end
-    
-    
+          
 end
 
 
-
-function socket = connectAttempt(address, port)
-
-    socket = tcpip(address, port);
-    set(socket, 'ReadAsyncMode', 'continuous');
-    set(socket, 'Timeout', 2);
-    
-    try
-        disp(['Opening a TCP connection to ', address, ' on port ', num2str(port)]);
-        fopen(socket);
-        disp(['Connected to ', address, ' on port ', num2str(port)]);
-    catch
-        disp(['Could not open TCP connection to ', address, ' on port ', port]);
-    end
-    
-end
