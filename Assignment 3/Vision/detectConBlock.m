@@ -8,24 +8,24 @@ function out = detectConBlock(img)
 %              block orientation (from -pi/4 to pi/4)
 %              block type (0 is letter, 1 is shape block)
 %              block reachable status (0 is unreachable, 1 is in range)
-    conImg(700:end, :) = 0;
-    conImg(:, 1:600,:) = 0;
-    conImg(:, 1160:end ,:) = 0;
+    img(700:end, :) = 0;
+    img(:, 1:600,:) = 0;
+    img(:, 1160:end ,:) = 0;
 
     % find centroids
-    [centroidL, maskedLImg, letterType] = detectLetterBlocks(img);
-    [centroidS, maskedSImg, shapeType] = detectShapeBlocks(img);
+    [centroidL, ~, letterType] = detectLetterBlocks(img);
+    [centroidS, ~, shapeType] = detectShapeBlocks(img);
 
     %Order the list from left to right
     types = [letterType; shapeType];
     centroids = sortrows([[centroidL; centroidS] types], 1,'ascend');
     % remove out of bounds centroids
-    oor = find(centroids(:,2) < 220);
+    oor = centroids(:,2) < 220;
     centroids(oor,:) = [];
 
     types = centroids(:, 3);
     centroids = centroids(:, 1:2);
-    out = [];
+    out = zeros(size(centroids,1),6);
 
     for i = 1:size(centroids(:,1))
         %angle finding
@@ -38,8 +38,6 @@ function out = detectConBlock(img)
         angle = blockAngle(block, centroids(i,:));
         catch
         end
-
-        filtLBlock = binaryLBlockMask(block);
 
         if ~isequal(size(block), [77 77 3])
            try
@@ -61,8 +59,8 @@ function out = detectConBlock(img)
         catch 
         end
 
-        blockOut = [centroids(i,1) centroids(i,2) angle type reachable];
-        out = [out; blockOut];
+        blockOut = [centroids(i,1) centroids(i,2) angle type reachable i];
+        out(i,:) = blockOut;
 
     end
 
@@ -83,7 +81,7 @@ function block = isolateBlock(centroid, img)
     
 end
 
-function angle = blockAngle(block, centroid)
+function angle = blockAngle(block, ~)
     % finds the orientation of a block
 
     binaryBlockImg = binaryLOutlineMask(block);

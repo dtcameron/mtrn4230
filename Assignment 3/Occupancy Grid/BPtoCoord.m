@@ -52,7 +52,7 @@ function [x,y] = BPtoCoord(boardType, xBP, yBP)
             y = gridY(str2double(yBP));
 
         otherwise
-            fprintf('FROM BPtoCoord: %s is not a valid board type', boardType);
+            fprintf('FROM BPtoCoord: %s is not a valid board type\n', boardType);
     end
     
 end

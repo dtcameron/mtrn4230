@@ -1,4 +1,4 @@
-function [deckBlocks, deckP2] = centroidToP2Deck(blockProps)
+function [deckBlocks, deckP2, ir] = centroidToP2Deck(blockProps)
 %     converts a image centroid coordinate from the tabCam to a grid BP in
 %     the P2 deck (if youre facing the board from the robot's POV, itll be the
 %     left deck!!!!!)
@@ -10,9 +10,12 @@ function [deckBlocks, deckP2] = centroidToP2Deck(blockProps)
 %               reachability  
 %
 %             deckP1 is the new 6x1x3 occupancy grid
-%               1 is the occupation boolean of the OG grid
+%            z: 1 is the occupation boolean of the OG grid
 %               2 is the type (i.e. shape or letter)
 %               3 is the orientation (from -pi/4 to pi/4)
+%               4 is the x centroid
+%               5 is the y centroid
+%               6 is an index for lisint
 
     
     % ------------ CONSTANTS --------------
@@ -38,14 +41,15 @@ function [deckBlocks, deckP2] = centroidToP2Deck(blockProps)
     %OUTPUT: deckP1
     %1 is the occupation boolean of the P1 grid
     %2 is the type (i.e. shape or letter)
-    deckP2 = zeros(6,1,3);
-    deckP2(:,:,2) = 2; %invalid type
-    deckP2(:,:,3) = NaN; %invalid angle
+    deckP2 = NaN(6,1,6);
     
     %create grid boundaries
     gridX = round(linspace(x0 + blockSpace, x1, 1));
     gridY = round(linspace(y0 + blockSpace, y1, 6));
-       
+    
+    % out index hack
+    outInd = 1;
+
     for i = 1:size(centroids,1)
         ind = ir(i);
         %for each point
@@ -56,14 +60,22 @@ function [deckBlocks, deckP2] = centroidToP2Deck(blockProps)
         %designation
         xDesig = find(x<gridX, 1);
         yDesig = find(y<gridY, 1);
+        
+        % if the position is already occupied don't replace it (outIndex hack)
+        if (deckP2(yDesig,xDesig,1) == 1)
+            continue;
+        end
 
         %assign attributes to appropriate grid spaces
         deckP2(yDesig,xDesig,1) = 1; %1 is occupied
         deckP2(yDesig,xDesig,2) = blockProps(ind,4); %take the block type
         deckP2(yDesig,xDesig,3) = blockProps(ind,3); %orientation
-        
+        deckP2(yDesig,xDesig,4) = blockProps(ind,1); %x
+        deckP2(yDesig,xDesig,5) = blockProps(ind,2); %y
+        deckP2(yDesig,xDesig,6) = outInd; % outIndex hack
         deckBlocks.desig = [deckBlocks.desig; string(i)];
         deckBlocks.details = [deckBlocks.details; blockProps(ind,1:4)];
+        outInd = outInd + 1;
     end
-    
+    1;
 end
