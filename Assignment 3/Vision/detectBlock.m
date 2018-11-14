@@ -9,22 +9,22 @@ function out = detectBlock(img)
 %           block type (0 is letter, 1 is shape block)
 %           block reachable status (0 is unreachable, 1 is in range)
 
-    colourCNN = importCNNs();
+%     colourCNN = importCNNs();
 
     % find centroids
-    [centroidL, maskedLImg, letterType] = detectLetterBlocks(img);
-    [centroidS, maskedSImg, shapeType] = detectShapeBlocks(img);
+    [centroidL, ~, letterType] = detectLetterBlocks(img);
+    [centroidS, ~, shapeType] = detectShapeBlocks(img);
 
     %Order the list from left to right
     types = [letterType; shapeType];
     centroids = sortrows([[centroidL; centroidS] types], 1,'ascend');
     % remove out of bounds centroids
-    oor = find(centroids(:,2) < 220);
+    oor = centroids(:,2) < 220;
     centroids(oor,:) = [];
 
     types = centroids(:, 3);
     centroids = centroids(:, 1:2);
-    out = [];
+    out = zeros(size(centroids,1),6);
 
     for i = 1:size(centroids(:,1))
         %angle finding
@@ -38,8 +38,6 @@ function out = detectBlock(img)
         catch
         end
 
-        filtLBlock = binaryLBlockMask(block);
-
         if ~isequal(size(block), [77 77 3])
            try
            block = imresize(block, [77 77]);
@@ -50,7 +48,7 @@ function out = detectBlock(img)
         %block classification
 %         colour = str2double(classifyColour(colourCNN, block));
 %         if colour ~= 0
-%            colour = 1;
+%            types(i) = 1;
 %         end
           type = types(i);
         
@@ -60,8 +58,8 @@ function out = detectBlock(img)
         catch 
         end
 
-        blockOut = [centroids(i,1) centroids(i,2) angle type reachable];
-        out = [out; blockOut];
+        blockOut = [centroids(i,1) centroids(i,2) angle type reachable i];
+        out(i,:) = blockOut;
 
     end
 
@@ -470,9 +468,8 @@ end
 % ------------------------ NEURAL NET -------------------------------
 function colourCNN = importCNNs()
 
-    colourCNN = load('colourCNN.mat', 'colourCNN');
+    colourCNN = load('aColourCNN.mat', 'colourCNN');
     colourCNN = colourCNN.colourCNN;
-    
     
 end
 

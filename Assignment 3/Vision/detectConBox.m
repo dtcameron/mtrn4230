@@ -1,4 +1,4 @@
-function [lines, conGridX, conGridY] = detectConBox(conImg)
+function [lines, conGridX, conGridY, centroid] = detectConBox(conImg)
 %   function detectConBox(conImg):
 %       Used during image processing, and the outputs are used for loading
 %       back into the box. Please be advised that for that step to work its
@@ -28,9 +28,9 @@ function [lines, conGridX, conGridY] = detectConBox(conImg)
     edgey = edge(BWconImg, 'canny');
     edgey = imdilate(edgey, ones(3));
     
-%     boxCentroid = regionprops('table', BWconImg, 'Centroid', 'Area');
-%     [~, ind] = max(boxCentroid.Area);
-%     centroid = boxCentroid.Centroid(ind,:);
+    boxCentroid = regionprops('table', BWconImg, 'Centroid', 'Area');
+    [~, ind] = max(boxCentroid.Area);
+    centroid = boxCentroid.Centroid(ind,:);
     
     [H, T, R] = hough(edgey);
     peaks = houghpeaks(H, 2);
