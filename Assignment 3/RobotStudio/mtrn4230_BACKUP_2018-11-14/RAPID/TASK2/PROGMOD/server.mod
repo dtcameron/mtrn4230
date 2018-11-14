@@ -5,13 +5,13 @@ MODULE server
     
     ! The host and port that we will be listening for a connection on.
     PERS string host := "127.0.0.1";
-    PERS string action := "SM";
+    PERS string action := "SC";
     PERS robjoint joints := [0,0,0,0,0,0];
     PERS num joggingjoints{6} := [0,0,0,0,0,0];
     PERS num jogdir{3} := [0,0,0];
     PERS robtarget target_pos;
     PERS speeddata speed;
-    PERS num busy := 1;
+    PERS num busy := 0;
    
     CONST num port := 1025;
     

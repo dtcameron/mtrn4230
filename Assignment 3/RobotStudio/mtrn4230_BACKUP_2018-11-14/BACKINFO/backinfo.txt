@@ -1,0 +1,47 @@
+#
+# Generated backup file, do not edit.
+#
+# Originally at: C:\Users\Student\Documents\RobotStudio\Systems\TEMP\1537490155\backup.002353
+# 2018-11-14  18:51:43
+#
+>>SYSTEM_ID:
+VIRTUAL_USE
+
+>>PRODUCTS_ID:
+RobotWare Version: 6.06.01.00
+
+  RobotWare Base
+  English
+  616-1 PC Interface
+  623-1 Multitasking
+  IRB 120-3/0.6
+  Axis Calibration
+  Drive System IRB 120/140/260/360/910SC/1200/1400/1520/1600/1660ID
+
+>>HOME:
+All public files and directories
+
+>>SYSPAR:
+SYS.cfg
+PROC.cfg
+MMC.cfg
+EIO.cfg
+SIO.cfg
+MOC.cfg
+
+
+>>TASK1: (T_ROB1,,)
+SYSMOD\user.sys @ 
+SYSMOD\LINKEDM.sys @ HIDDEN
+SYSMOD\MTRN_Rob_Proc.sys @ 
+PROGMOD\movement.mod @ 
+SYSMOD\MTRN_Rob_Data.sys @ 
+
+>>TASK2: (T_ROB2,,)
+SYSMOD\user.sys @ 
+PROGMOD\server.mod @ 
+SYSMOD\MTRN_Rob_Proc.sys @ 
+SYSMOD\MTRN_Rob_Data.sys @ 
+
+
+>>EOF:

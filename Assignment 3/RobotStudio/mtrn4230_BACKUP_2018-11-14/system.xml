@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SystemProperties>
+  <SystemName>mtrn4230</SystemName>
+  <SerialNo>VIRTUAL_USE</SerialNo>
+  <UsedMedia>
+    <Media path="C:\Users\Student\AppData\Local\ABB Industrial IT\Robotics IT\RobotWare\RobotWare_6.06.1025" name="RobotWare" version="6.06.1025">
+    </Media>
+  </UsedMedia>
+  <ControlModule>
+    <Option descr="RobotWare Base">
+    </Option>
+    <Option descr="English">
+    </Option>
+    <Option descr="616-1 PC Interface">
+    </Option>
+    <Option descr="623-1 Multitasking">
+    </Option>
+  </ControlModule>
+  <DriveModule>
+    <Name>Robot1</Name>
+    <Option descr="IRB 120-3/0.6">
+    </Option>
+    <Option descr="Axis Calibration">
+    </Option>
+    <Option descr="Drive System IRB 120/140/260/360/910SC/1200/1400/1520/1600/1660ID">
+    </Option>
+  </DriveModule>
+</SystemProperties>
