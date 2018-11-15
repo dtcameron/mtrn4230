@@ -1,5 +1,6 @@
-% Prepare the data to be shown in GUI
 function DataOut = PrepareData(NumIn, DataIn)
+% Prepare the data to be shown in GUI
+% 
     if (NumIn == 0)
         DataOut = zeros(NumIn,7);
         return;

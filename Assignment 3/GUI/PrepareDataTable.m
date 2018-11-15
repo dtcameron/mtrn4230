@@ -3,7 +3,7 @@ function DataOut = PrepareDataTable(NumIn, DataIn)
     if (NumIn == 0)
         DataOut = zeros(NumIn,7);
         return;
-    end 
+    end
     DataOut = zeros(NumIn,7);
     for i=1:NumIn
         %[BPY, BPX] = GetBlockPos(i,DataIn);
