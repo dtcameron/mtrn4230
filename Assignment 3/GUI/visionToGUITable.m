@@ -5,8 +5,8 @@ function outData = visionToGUITable(Data)
     outData = zeros(size(Data,1),size(Data,2));
     outData(:,1) = 1;
     outData(:,2) = Data(:,1);
-    outData(:,3) = Data(:,2);
-    outData(:,4) = Data(:,3);
+    outData(:,3) = round(Data(:,2));
+    outData(:,4) = round(Data(:,3));
     outData(:,5) = Data(:,4);
     outData(:,6) = Data(:,6);
     

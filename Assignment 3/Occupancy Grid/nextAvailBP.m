@@ -1,5 +1,6 @@
 function [BPX, BPY] = nextAvailBP(boardType, boardOG)
-
+    BPX = -1;
+    BPY = -1;
     switch boardType
         case 'main'
            [freeY, freeX]  = find(isnan(boardOG));

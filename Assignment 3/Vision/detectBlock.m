@@ -12,8 +12,8 @@ function out = detectBlock(img)
 %     colourCNN = importCNNs();
 
     % find centroids
-    [centroidL, ~, letterType] = detectLetterBlocks(img);
-    [centroidS, ~, shapeType] = detectShapeBlocks(img);
+    [centroidL, a, letterType] = detectLetterBlocks(img);
+    [centroidS, b, shapeType] = detectShapeBlocks(img);
 
     %Order the list from left to right
     types = [letterType; shapeType];
@@ -161,7 +161,7 @@ function reachable = isReachable(centroid)
     origin = [805, 26];
     reach = 832.4;
         
-    if hypot(centroid(1) - origin(1), centroid(2) - origin(2)) < reach
+    if hypot(centroid(1) - origin(1), centroid(2) - origin(2)) < reach;
         reachable = 1;
     else
         reachable = 0;
